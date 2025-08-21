@@ -1,7 +1,19 @@
-export default function App() {
+// App.js
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+// Corrected import path: ensure 'Pages' matches the actual folder casing
+import Login from "./Pages/Login"; 
+
+function App() {
   return (
-    <h1 className="text-3xl font-bold underline bg-red-100">
-      Hello world!
-    </h1>
-  )
+    <Router>
+      <div>
+        <Routes>
+          {/* Only the public login route is included */}
+          <Route path="/" element={<Login />} />
+        </Routes>
+      </div>
+    </Router>
+  );
 }
+
+export default App;
