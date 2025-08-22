@@ -8,13 +8,13 @@ import {
   SunIcon,
   ExclamationCircleIcon,
   CheckCircleIcon,
-  ClipboardDocumentListIcon
+  ClipboardDocumentListIcon,
+  BeakerIcon
 } from '@heroicons/react/24/outline';
 
 import AppSidebar from '../Components/AppSidebar';
 import AppHeader from '../Components/AppHeader';
 import AppFooter from '../Components/AppFooter';
-
 
 // A component to display the multi-step progress bar with icons
 const ProgressBar = ({ currentStep, totalSteps, icons }) => {
@@ -33,8 +33,8 @@ const ProgressBar = ({ currentStep, totalSteps, icons }) => {
           const stepNumber = index + 1;
           const isCurrentStep = stepNumber === currentStep;
           const isCompleted = stepNumber < currentStep;
-          const Icon = icons[index];
-          const label = ['Demographics', 'Measurements', 'Vitals', 'Vision', 'Medical History', 'Lifestyle', 'Problems', 'Treatment'][index];
+          const StepIcon = icons[index];
+          const label = ['Demographics', 'Health Metrics', 'Medical History', 'Lifestyle', 'Problems', 'Treatment'][index];
 
           return (
             <div key={index} className="flex flex-col items-center z-10">
@@ -42,7 +42,7 @@ const ProgressBar = ({ currentStep, totalSteps, icons }) => {
                 className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-white transition-colors duration-500
                   ${isCurrentStep ? 'bg-red-500' : isCompleted ? 'bg-green-500' : 'bg-gray-400'}`}
               >
-                <Icon className="w-4 h-4" />
+                <StepIcon className="w-4 h-4" />
               </div>
               <span className={`mt-2 text-center font-medium w-20 text-xs text-gray-700 transition-colors duration-500
                 ${isCompleted || isCurrentStep ? 'text-green-700' : 'text-gray-700'}`}>
@@ -56,19 +56,38 @@ const ProgressBar = ({ currentStep, totalSteps, icons }) => {
   );
 };
 
+// Section header component with icon
+const SectionHeader = ({ icon, title }) => {
+  const IconComponent = icon;
+  return (
+    <div className="flex items-center mb-3 pb-2 border-b border-gray-200">
+      <IconComponent className="w-5 h-5 mr-2 text-red-500" />
+      <h2 className="text-base font-semibold text-gray-800">{title}</h2>
+    </div>
+  );
+};
+
 // The main page component for adding a new patient
 function AddNewPatient() {
   const [step, setStep] = useState(1);
-  const totalSteps = 8;
+  const totalSteps = 6; // Reduced from 8 to 6
   const [formData, setFormData] = useState({
+    // Demographics
     registrationNo: '', name: '', epfNo: '', contactNo: '', gender: '', dateOfBirth: '', age: '',
+    // Physical Measurements
     height: '', weight: '', bmi: '', waist: '',
+    // Vital Signs
     rbs: '', fbs: '', bp: '',
+    // Vision
     visionLeft: '', visionRight: '',
+    // Medical History
     patientHistory: [], familyHistoryFather: [], familyHistoryMother: [], familyHistorySiblings: [],
     otherPatientConditions: '', otherFatherConditions: '', otherMotherConditions: '', otherSiblingsConditions: '',
+    // Lifestyle
     alcoholConsumption: '', smokingHabits: '',
+    // Problems
     currentProblems: '',
+    // Treatment
     treatmentPlan: '', smokingCessationAdvice: '', alcoholAbuseAdvice: '',
   });
   const [errors, setErrors] = useState({});
@@ -90,10 +109,15 @@ function AddNewPatient() {
         [name]: value,
       }));
     }
+    // Clear error when user types
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
   };
 
   const validateStep = (currentStep) => {
     const newErrors = {};
+
     if (currentStep === 1) {
       if (!formData.name) newErrors.name = 'Patient Name is required.';
       if (!formData.registrationNo) newErrors.registrationNo = 'Registration No. is required.';
@@ -103,6 +127,37 @@ function AddNewPatient() {
       if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of Birth is required.';
       if (!formData.age) newErrors.age = 'Age is required.';
     }
+
+    if (currentStep === 2) {
+      // Physical Measurements
+      if (!formData.height) newErrors.height = 'Height is required.';
+      if (!formData.weight) newErrors.weight = 'Weight is required.';
+      if (!formData.bmi) newErrors.bmi = 'BMI is required.';
+      if (!formData.waist) newErrors.waist = 'Waist measurement is required.';
+      // Vital Signs
+      if (!formData.rbs) newErrors.rbs = 'RBS is required.';
+      if (!formData.fbs) newErrors.fbs = 'FBS is required.';
+      if (!formData.bp) newErrors.bp = 'Blood Pressure is required.';
+      // Vision
+      if (!formData.visionLeft) newErrors.visionLeft = 'Left eye vision is required.';
+      if (!formData.visionRight) newErrors.visionRight = 'Right eye vision is required.';
+    }
+
+    if (currentStep === 4) {
+      if (!formData.alcoholConsumption) newErrors.alcoholConsumption = 'Alcohol consumption details are required.';
+      if (!formData.smokingHabits) newErrors.smokingHabits = 'Smoking habits details are required.';
+    }
+
+    if (currentStep === 5) {
+      if (!formData.currentProblems) newErrors.currentProblems = 'Current problems description is required.';
+    }
+
+    if (currentStep === 6) {
+      if (!formData.treatmentPlan) newErrors.treatmentPlan = 'Treatment plan is required.';
+      if (!formData.smokingCessationAdvice) newErrors.smokingCessationAdvice = 'Smoking cessation advice is required.';
+      if (!formData.alcoholAbuseAdvice) newErrors.alcoholAbuseAdvice = 'Alcohol abuse advice is required.';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -116,16 +171,17 @@ function AddNewPatient() {
         alert('Patient details saved successfully!');
         setStep(1);
         setFormData({
-            registrationNo: '', name: '', epfNo: '', contactNo: '', gender: '', dateOfBirth: '', age: '',
-            height: '', weight: '', bmi: '', waist: '',
-            rbs: '', fbs: '', bp: '',
-            visionLeft: '', visionRight: '',
-            patientHistory: [], familyHistoryFather: [], familyHistoryMother: [], familyHistorySiblings: [],
-            otherPatientConditions: '', otherFatherConditions: '', otherMotherConditions: '', otherSiblingsConditions: '',
-            alcoholConsumption: '', smokingHabits: '',
-            currentProblems: '',
-            treatmentPlan: '', smokingCessationAdvice: '', alcoholAbuseAdvice: '',
+          registrationNo: '', name: '', epfNo: '', contactNo: '', gender: '', dateOfBirth: '', age: '',
+          height: '', weight: '', bmi: '', waist: '',
+          rbs: '', fbs: '', bp: '',
+          visionLeft: '', visionRight: '',
+          patientHistory: [], familyHistoryFather: [], familyHistoryMother: [], familyHistorySiblings: [],
+          otherPatientConditions: '', otherFatherConditions: '', otherMotherConditions: '', otherSiblingsConditions: '',
+          alcoholConsumption: '', smokingHabits: '',
+          currentProblems: '',
+          treatmentPlan: '', smokingCessationAdvice: '', alcoholAbuseAdvice: '',
         });
+        setErrors({});
       }
     }
   };
@@ -142,23 +198,20 @@ function AddNewPatient() {
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
+  
   const closeSidebar = () => {
     setIsSidebarOpen(false);
   };
-  
+
   const progressIcons = [
-    UserCircleIcon, ScaleIcon, HeartIcon, EyeIcon, ClipboardDocumentListIcon, SunIcon, ExclamationCircleIcon, CheckCircleIcon
+    UserCircleIcon, HeartIcon, ClipboardDocumentListIcon, SunIcon, ExclamationCircleIcon, CheckCircleIcon
   ];
-  
+
   const commonMedicalConditions = ['DM', 'HTN', 'Chol', 'IHD', 'CA'];
 
   return (
     <div className="flex h-screen bg-gray-100 font-sans">
-      <AppSidebar
-        isSidebarOpen={isSidebarOpen}
-        onCloseSidebar={closeSidebar}
-        currentPage="Add New Patient"
-      />
+      <AppSidebar isSidebarOpen={isSidebarOpen} onCloseSidebar={closeSidebar} currentPage="Add New Patient" />
 
       <main className="flex-1 flex flex-col overflow-hidden">
         <AppHeader
@@ -172,9 +225,13 @@ function AddNewPatient() {
               <ProgressBar currentStep={step} totalSteps={totalSteps} icons={progressIcons} />
             </div>
 
+            {/* Step 1: Patient Demographics */}
             {step === 1 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                <h1 className="text-xl font-semibold text-gray-800 md:col-span-2">Patient Demographics</h1>
+                <h1 className="text-xl font-semibold text-gray-800 md:col-span-2 flex items-center">
+                  <UserCircleIcon className="w-6 h-6 mr-2 text-red-500" />
+                  Patient Demographics
+                </h1>
                 <div>
                   <label htmlFor="registrationNo" className="block text-xs font-medium text-gray-700">Registration No.</label>
                   <input type="text" id="registrationNo" name="registrationNo" value={formData.registrationNo} onChange={handleChange} className={`mt-1 block w-full border rounded-md shadow-sm p-1 ${errors.registrationNo ? 'border-red-500' : 'border-gray-300'}`} />
@@ -222,63 +279,89 @@ function AddNewPatient() {
               </div>
             )}
 
+            {/* Step 2: Combined Health Metrics (Physical Measurements, Vital Signs, Vision) */}
             {step === 2 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                <h1 className="text-xl font-semibold text-gray-800 md:col-span-2">Physical Measurements</h1>
+              <div className="space-y-6">
+                <h1 className="text-xl font-semibold text-gray-800 flex items-center">
+                  <HeartIcon className="w-6 h-6 mr-2 text-red-500" />
+                  Health Metrics
+                </h1>
+                
+                {/* Physical Measurements Section */}
                 <div>
-                  <label htmlFor="height" className="block text-xs font-medium text-gray-700">Height (cm)</label>
-                  <input type="number" id="height" name="height" value={formData.height} onChange={handleChange} className="mt-1 block w-full border rounded-md shadow-sm p-1 border-gray-300" />
+                  <SectionHeader icon={ScaleIcon} title="Physical Measurements" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                    <div>
+                      <label htmlFor="height" className="block text-xs font-medium text-gray-700">Height (cm)</label>
+                      <input type="number" id="height" name="height" value={formData.height} onChange={handleChange} className={`mt-1 block w-full border rounded-md shadow-sm p-1 ${errors.height ? 'border-red-500' : 'border-gray-300'}`} />
+                      {errors.height && <p className="mt-1 text-xs text-red-500">{errors.height}</p>}
+                    </div>
+                    <div>
+                      <label htmlFor="weight" className="block text-xs font-medium text-gray-700">Weight (kg)</label>
+                      <input type="number" id="weight" name="weight" value={formData.weight} onChange={handleChange} className={`mt-1 block w-full border rounded-md shadow-sm p-1 ${errors.weight ? 'border-red-500' : 'border-gray-300'}`} />
+                      {errors.weight && <p className="mt-1 text-xs text-red-500">{errors.weight}</p>}
+                    </div>
+                    <div>
+                      <label htmlFor="bmi" className="block text-xs font-medium text-gray-700">BMI</label>
+                      <input type="number" id="bmi" name="bmi" value={formData.bmi} onChange={handleChange} className={`mt-1 block w-full border rounded-md shadow-sm p-1 ${errors.bmi ? 'border-red-500' : 'border-gray-300'}`} />
+                      {errors.bmi && <p className="mt-1 text-xs text-red-500">{errors.bmi}</p>}
+                    </div>
+                    <div>
+                      <label htmlFor="waist" className="block text-xs font-medium text-gray-700">Waist (cm)</label>
+                      <input type="number" id="waist" name="waist" value={formData.waist} onChange={handleChange} className={`mt-1 block w-full border rounded-md shadow-sm p-1 ${errors.waist ? 'border-red-500' : 'border-gray-300'}`} />
+                      {errors.waist && <p className="mt-1 text-xs text-red-500">{errors.waist}</p>}
+                    </div>
+                  </div>
                 </div>
+
+                {/* Vital Signs & Lab Results Section */}
                 <div>
-                  <label htmlFor="weight" className="block text-xs font-medium text-gray-700">Weight (kg)</label>
-                  <input type="number" id="weight" name="weight" value={formData.weight} onChange={handleChange} className="mt-1 block w-full border rounded-md shadow-sm p-1 border-gray-300" />
+                  <SectionHeader icon={BeakerIcon} title="Vital Signs & Lab Results" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                    <div>
+                      <label htmlFor="rbs" className="block text-xs font-medium text-gray-700">RBS (Random Blood Sugar)</label>
+                      <input type="text" id="rbs" name="rbs" value={formData.rbs} onChange={handleChange} className={`mt-1 block w-full border rounded-md shadow-sm p-1 ${errors.rbs ? 'border-red-500' : 'border-gray-300'}`} />
+                      {errors.rbs && <p className="mt-1 text-xs text-red-500">{errors.rbs}</p>}
+                    </div>
+                    <div>
+                      <label htmlFor="fbs" className="block text-xs font-medium text-gray-700">FBS (Fasting Blood Sugar)</label>
+                      <input type="text" id="fbs" name="fbs" value={formData.fbs} onChange={handleChange} className={`mt-1 block w-full border rounded-md shadow-sm p-1 ${errors.fbs ? 'border-red-500' : 'border-gray-300'}`} />
+                      {errors.fbs && <p className="mt-1 text-xs text-red-500">{errors.fbs}</p>}
+                    </div>
+                    <div>
+                      <label htmlFor="bp" className="block text-xs font-medium text-gray-700">BP (Blood Pressure)</label>
+                      <input type="text" id="bp" name="bp" value={formData.bp} onChange={handleChange} placeholder="120/80" className={`mt-1 block w-full border rounded-md shadow-sm p-1 ${errors.bp ? 'border-red-500' : 'border-gray-300'}`} />
+                      {errors.bp && <p className="mt-1 text-xs text-red-500">{errors.bp}</p>}
+                    </div>
+                  </div>
                 </div>
+
+                {/* Vision Assessment Section */}
                 <div>
-                  <label htmlFor="bmi" className="block text-xs font-medium text-gray-700">BMI</label>
-                  <input type="number" id="bmi" name="bmi" value={formData.bmi} onChange={handleChange} className="mt-1 block w-full border rounded-md shadow-sm p-1 border-gray-300" />
-                </div>
-                <div>
-                  <label htmlFor="waist" className="block text-xs font-medium text-gray-700">Waist (cm)</label>
-                  <input type="number" id="waist" name="waist" value={formData.waist} onChange={handleChange} className="mt-1 block w-full border rounded-md shadow-sm p-1 border-gray-300" />
+                  <SectionHeader icon={EyeIcon} title="Vision Assessment" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                    <div>
+                      <label htmlFor="visionLeft" className="block text-xs font-medium text-gray-700">Vision: Left Eye</label>
+                      <input type="text" id="visionLeft" name="visionLeft" value={formData.visionLeft} onChange={handleChange} className={`mt-1 block w-full border rounded-md shadow-sm p-1 ${errors.visionLeft ? 'border-red-500' : 'border-gray-300'}`} />
+                      {errors.visionLeft && <p className="mt-1 text-xs text-red-500">{errors.visionLeft}</p>}
+                    </div>
+                    <div>
+                      <label htmlFor="visionRight" className="block text-xs font-medium text-gray-700">Vision: Right Eye</label>
+                      <input type="text" id="visionRight" name="visionRight" value={formData.visionRight} onChange={handleChange} className={`mt-1 block w-full border rounded-md shadow-sm p-1 ${errors.visionRight ? 'border-red-500' : 'border-gray-300'}`} />
+                      {errors.visionRight && <p className="mt-1 text-xs text-red-500">{errors.visionRight}</p>}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
             
+            {/* Step 3: Medical History */}
             {step === 3 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                <h1 className="text-xl font-semibold text-gray-800 md:col-span-2">Vital Signs & Lab Results</h1>
-                <div>
-                  <label htmlFor="rbs" className="block text-xs font-medium text-gray-700">RBS (Random Blood Sugar)</label>
-                  <input type="text" id="rbs" name="rbs" value={formData.rbs} onChange={handleChange} className="mt-1 block w-full border rounded-md shadow-sm p-1 border-gray-300" />
-                </div>
-                <div>
-                  <label htmlFor="fbs" className="block text-xs font-medium text-gray-700">FBS (Fasting Blood Sugar)</label>
-                  <input type="text" id="fbs" name="fbs" value={formData.fbs} onChange={handleChange} className="mt-1 block w-full border rounded-md shadow-sm p-1 border-gray-300" />
-                </div>
-                <div>
-                  <label htmlFor="bp" className="block text-xs font-medium text-gray-700">BP (Blood Pressure)</label>
-                  <input type="text" id="bp" name="bp" value={formData.bp} onChange={handleChange} className="mt-1 block w-full border rounded-md shadow-sm p-1 border-gray-300" />
-                </div>
-              </div>
-            )}
-
-            {step === 4 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                <h1 className="text-xl font-semibold text-gray-800 md:col-span-2">Vision Assessment</h1>
-                <div>
-                  <label htmlFor="visionLeft" className="block text-xs font-medium text-gray-700">Vision: Left</label>
-                  <input type="text" id="visionLeft" name="visionLeft" value={formData.visionLeft} onChange={handleChange} className="mt-1 block w-full border rounded-md shadow-sm p-1 border-gray-300" />
-                </div>
-                <div>
-                  <label htmlFor="visionRight" className="block text-xs font-medium text-gray-700">Vision: Right</label>
-                  <input type="text" id="visionRight" name="visionRight" value={formData.visionRight} onChange={handleChange} className="mt-1 block w-full border rounded-md shadow-sm p-1 border-gray-300" />
-                </div>
-              </div>
-            )}
-            
-            {step === 5 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                <h1 className="text-xl font-semibold text-gray-800 md:col-span-2">Medical History</h1>
+                <h1 className="text-xl font-semibold text-gray-800 md:col-span-2 flex items-center">
+                  <ClipboardDocumentListIcon className="w-6 h-6 mr-2 text-red-500" />
+                  Medical History
+                </h1>
                 <div>
                   <h3 className="text-sm font-medium text-gray-900 mb-2">Patient History</h3>
                   {commonMedicalConditions.map((condition) => (
@@ -328,42 +411,60 @@ function AddNewPatient() {
               </div>
             )}
             
-            {step === 6 && (
+            {/* Step 4: Lifestyle & Habits */}
+            {step === 4 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                <h1 className="text-xl font-semibold text-gray-800 md:col-span-2">Lifestyle & Habits</h1>
+                <h1 className="text-xl font-semibold text-gray-800 md:col-span-2 flex items-center">
+                  <SunIcon className="w-6 h-6 mr-2 text-red-500" />
+                  Lifestyle & Habits
+                </h1>
                 <div>
                   <label htmlFor="alcoholConsumption" className="block text-xs font-medium text-gray-700">Alcohol Consumption</label>
-                  <textarea id="alcoholConsumption" name="alcoholConsumption" rows="3" value={formData.alcoholConsumption} onChange={handleChange} className="mt-1 block w-full border rounded-md shadow-sm p-1 border-gray-300"></textarea>
+                  <textarea id="alcoholConsumption" name="alcoholConsumption" rows="3" value={formData.alcoholConsumption} onChange={handleChange} placeholder="Describe frequency and amount..." className={`mt-1 block w-full border rounded-md shadow-sm p-1 ${errors.alcoholConsumption ? 'border-red-500' : 'border-gray-300'}`}></textarea>
+                  {errors.alcoholConsumption && <p className="mt-1 text-xs text-red-500">{errors.alcoholConsumption}</p>}
                 </div>
                 <div>
                   <label htmlFor="smokingHabits" className="block text-xs font-medium text-gray-700">Smoking Habits</label>
-                  <textarea id="smokingHabits" name="smokingHabits" rows="3" value={formData.smokingHabits} onChange={handleChange} className="mt-1 block w-full border rounded-md shadow-sm p-1 border-gray-300"></textarea>
+                  <textarea id="smokingHabits" name="smokingHabits" rows="3" value={formData.smokingHabits} onChange={handleChange} placeholder="Describe frequency and amount..." className={`mt-1 block w-full border rounded-md shadow-sm p-1 ${errors.smokingHabits ? 'border-red-500' : 'border-gray-300'}`}></textarea>
+                  {errors.smokingHabits && <p className="mt-1 text-xs text-red-500">{errors.smokingHabits}</p>}
                 </div>
               </div>
             )}
             
-            {step === 7 && (
+            {/* Step 5: Current Problems */}
+            {step === 5 && (
               <div>
-                <h1 className="text-xl font-semibold text-gray-800 mb-4">Current Problems</h1>
+                <h1 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                  <ExclamationCircleIcon className="w-6 h-6 mr-2 text-red-500" />
+                  Current Problems
+                </h1>
                 <label htmlFor="currentProblems" className="block text-xs font-medium text-gray-700">Details of current health problems (e.g., Increased body weight, Blood sugar issues, Blood pressure issues, Poor vision)</label>
-                <textarea id="currentProblems" name="currentProblems" rows="4" value={formData.currentProblems} onChange={handleChange} className="mt-1 block w-full border rounded-md shadow-sm p-1 border-gray-300"></textarea>
+                <textarea id="currentProblems" name="currentProblems" rows="4" value={formData.currentProblems} onChange={handleChange} placeholder="Describe current symptoms and issues..." className={`mt-1 block w-full border rounded-md shadow-sm p-1 ${errors.currentProblems ? 'border-red-500' : 'border-gray-300'}`}></textarea>
+                {errors.currentProblems && <p className="mt-1 text-xs text-red-500">{errors.currentProblems}</p>}
               </div>
             )}
             
-            {step === 8 && (
+            {/* Step 6: Treatment Plan */}
+            {step === 6 && (
               <div className="space-y-4">
-                <h1 className="text-xl font-semibold text-gray-800">Treatment Plan / Recommendations</h1>
+                <h1 className="text-xl font-semibold text-gray-800 flex items-center">
+                  <CheckCircleIcon className="w-6 h-6 mr-2 text-red-500" />
+                  Treatment Plan / Recommendations
+                </h1>
                 <div>
                   <label htmlFor="treatmentPlan" className="block text-xs font-medium text-gray-700">Specific plans or recommendations (e.g., Sponge Family, Away of Medical Centre - CPSTL)</label>
-                  <textarea id="treatmentPlan" name="treatmentPlan" rows="3" value={formData.treatmentPlan} onChange={handleChange} className="mt-1 block w-full border rounded-md shadow-sm p-1 border-gray-300"></textarea>
+                  <textarea id="treatmentPlan" name="treatmentPlan" rows="3" value={formData.treatmentPlan} onChange={handleChange} placeholder="Enter treatment details..." className={`mt-1 block w-full border rounded-md shadow-sm p-1 ${errors.treatmentPlan ? 'border-red-500' : 'border-gray-300'}`}></textarea>
+                  {errors.treatmentPlan && <p className="mt-1 text-xs text-red-500">{errors.treatmentPlan}</p>}
                 </div>
                 <div>
                   <label htmlFor="smokingCessationAdvice" className="block text-xs font-medium text-gray-700">Smoking cessation advice</label>
-                  <textarea id="smokingCessationAdvice" name="smokingCessationAdvice" rows="3" value={formData.smokingCessationAdvice} onChange={handleChange} className="mt-1 block w-full border rounded-md shadow-sm p-1 border-gray-300"></textarea>
+                  <textarea id="smokingCessationAdvice" name="smokingCessationAdvice" rows="3" value={formData.smokingCessationAdvice} onChange={handleChange} placeholder="Enter advice for smoking cessation..." className={`mt-1 block w-full border rounded-md shadow-sm p-1 ${errors.smokingCessationAdvice ? 'border-red-500' : 'border-gray-300'}`}></textarea>
+                  {errors.smokingCessationAdvice && <p className="mt-1 text-xs text-red-500">{errors.smokingCessationAdvice}</p>}
                 </div>
                 <div>
                   <label htmlFor="alcoholAbuseAdvice" className="block text-xs font-medium text-gray-700">Alcohol abuse advice</label>
-                  <textarea id="alcoholAbuseAdvice" name="alcoholAbuseAdvice" rows="3" value={formData.alcoholAbuseAdvice} onChange={handleChange} className="mt-1 block w-full border rounded-md shadow-sm p-1 border-gray-300"></textarea>
+                  <textarea id="alcoholAbuseAdvice" name="alcoholAbuseAdvice" rows="3" value={formData.alcoholAbuseAdvice} onChange={handleChange} placeholder="Enter advice for alcohol abuse..." className={`mt-1 block w-full border rounded-md shadow-sm p-1 ${errors.alcoholAbuseAdvice ? 'border-red-500' : 'border-gray-300'}`}></textarea>
+                  {errors.alcoholAbuseAdvice && <p className="mt-1 text-xs text-red-500">{errors.alcoholAbuseAdvice}</p>}
                 </div>
               </div>
             )}
