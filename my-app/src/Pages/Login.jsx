@@ -9,7 +9,7 @@ const LoginCard = ({ children }) => {
     <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
       <div className="flex flex-col items-center mb-6">
         <img
-          src="/MedRecords.png" // Corrected path to point to the public folder
+          src="/public/cpstl.png" // Ensure this path is correct relative to your public folder
           alt="Company Logo"
           className="w-24 h-24 mb-4 rounded-full object-cover"
           onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/96x96/cccccc/333333?text=Logo"; }}
@@ -67,7 +67,8 @@ const LoginForm = ({ onLoginSuccess }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    // Reduced vertical spacing between form elements
+    <form onSubmit={handleSubmit} className="space-y-2">
       <div>
         <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
           User name
