@@ -1,8 +1,13 @@
-// src/Componenets/AppSidebar.jsx
+// src/Components/AppSidebar.jsx
 import React from 'react';
 import AppSidebarNav from './AppSidebarNav';
 
 const AppSidebar = ({ isSidebarOpen, onCloseSidebar, currentPage }) => {
+  // Retrieve user data from localStorage
+  const storeData = localStorage.getItem('userData');
+  const userData = storeData ? JSON.parse(storeData) : null;
+  const userRole = userData?.role_type || 'Role'; // Default role if not found
+
   return (
     <>
       {/* Mobile Backdrop */}
@@ -15,25 +20,40 @@ const AppSidebar = ({ isSidebarOpen, onCloseSidebar, currentPage }) => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 bg-red-700 text-white shadow-xl transform transition-transform duration-300 z-50 md:relative md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 bg-white text-gray-900 shadow-xl transform transition-transform duration-300 z-50 md:relative md:translate-x-0 ${
           isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full md:w-20'
         }`}
       >
-        <div className={`p-4 flex flex-col items-center justify-center border-b border-red-600 ${isSidebarOpen ? 'w-64' : 'w-20'}`}>
-          <img
-            src="public/MedRecords.png"
-            alt="MedRecords Logo"
-            className={`rounded-full object-cover mb-2 transition-all duration-300 ${
-              isSidebarOpen ? 'w-24 h-24' : 'w-10 h-10'
-            }`}
-            onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/112x112/ffffff/000000?text=Logo"; }}
-          />
-          {isSidebarOpen && <h2 className="text-xl font-bold">CPSTL MedRecord </h2>}
-        </div>
+        {/* Logo and Clinic Name Section */}
+<div className={`p-4 flex flex-col items-center justify-center border-b border-gray-200 ${isSidebarOpen ? 'w-64' : 'w-20'}`}>
+  <div className="flex items-center"> {/* Flex container for logo and text */}
+    <img
+      src="public/medi.jpeg" // Placeholder for clinic logo
+      alt="CPSTL MedRecord Logo"
+      className={`object-cover transition-all duration-300 ${
+        isSidebarOpen ? 'w-19 h-20 mr-2' : 'w-20 h-30' // Increased logo size when open and closed
+      }`}
+    />
+    {isSidebarOpen && <h2 className="text-lg font-bold text-gray-900 whitespace-nowrap">CPSTL MedRecord</h2>} {/* Reduced text size to 'lg' */}
+  </div>
+</div>
+        {/* User Profile Section */}
+        {isSidebarOpen && (
+          <div className="p-4 flex flex-col items-center border-b border-gray-200">
+            <img
+              src="https://placehold.co/80x80/cccccc/333333?text=👤" // Placeholder for profile picture
+              alt="User Profile"
+              className="object-cover w-20 h-20 mb-2 border-2 border-gray-300 rounded-md" // Changed to rounded-md for square appearance
+              onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/80x80/cccccc/333333?text=👤"; }}
+            />
+            <p className="text-xs text-gray-600 uppercase">{userRole}</p>
+          </div>
+        )}
+
         <AppSidebarNav
           onNavLinkClick={onCloseSidebar}
           currentPage={currentPage}
-          isSidebarOpen={isSidebarOpen} 
+          isSidebarOpen={isSidebarOpen}
         />
       </aside>
     </>

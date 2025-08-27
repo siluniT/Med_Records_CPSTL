@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Settings, Menu, X, BarChart2, Target, TrendingUp, FileText } from 'lucide-react';
-import defaultProfileIcon from '../assets/MedRecords.png'; // Corrected import path for image
-import NotificationPanel from './NotificationPanel'; // Corrected import path
+import NotificationPanel from './NotificationPanel'; 
+
+// Removed the old import and defined the path to the new image
+const defaultPublicProfileIcon = '/pro icon.png';
 
 const AppHeader = ({ onMenuToggle, isSidebarOpen }) => {
     const [userData, setUserData] = useState(null);
@@ -236,7 +238,7 @@ const AppHeader = ({ onMenuToggle, isSidebarOpen }) => {
                             />
                         ) : (
                             <img
-                                src={defaultProfileIcon}
+                                src={defaultPublicProfileIcon}
                                 alt="Default Profile"
                                 className="w-8 h-8 rounded-full object-cover border-2 border-red-600"
                             />
