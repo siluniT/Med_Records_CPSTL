@@ -1,5 +1,5 @@
 // src/Pages/Dashboard.jsx
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   BuildingOffice2Icon,
@@ -36,40 +36,61 @@ const StatCard = ({ icon, title, value, sub }) => {
 };
 
 // Red promo banner
-const PromoBanner = () => (
-  <div className="relative overflow-hidden rounded-xl p-6 md:p-7 lg:p-8 bg-gradient-to-r from-red-500 to-red-600 text-white shadow-sm">
-    <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
-    <div className="absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-white/10 blur-3xl" />
-    <div className="relative z-10 flex items-center">
-      <div className="flex-1">
-        <div class="text-2xl md:text-3xl font-bold leading-tight">
-          Welcome back!
+const PromoBanner = () => {
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const formattedDate = currentTime.toLocaleDateString('en-US', {
+    day: 'numeric',
+    month: 'short',
+  });
+  const formattedTime = currentTime.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  return (
+    <div className="relative overflow-hidden rounded-xl p-6 md:p-7 lg:p-8 bg-gradient-to-r from-red-500 to-red-600 text-white shadow-sm">
+      <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
+      <div className="absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-white/10 blur-3xl" />
+      <div className="relative z-10 flex items-center">
+        <div className="flex-1">
+          <div class="text-2xl md:text-3xl font-bold leading-tight">
+            Welcome back!
+          </div>
+          <div class="mt-2 text-sm text-white/90">
+            We hope you have a great day. The latest data is here for you.
+          </div>
+          <div className="mt-2 flex items-center text-sm text-red-50">
+            <CalendarDaysIcon className="w-4 h-4 mr-1 opacity-90" />
+            {formattedDate} · {formattedTime}
+          </div>
         </div>
-       <div class="mt-2 text-sm text-white/90">
-          We hope you have a great day. The latest data is here for you.
-        </div>
-        <div className="mt-2 flex items-center text-sm text-red-50">
-          <CalendarDaysIcon className="w-4 h-4 mr-1 opacity-90" />
-          29 Nov · 20:00 PM
-        </div>
-        
-      </div>
-      <div className="hidden md:block ml-6">
-        <div className="w-40 h-40 md:w-48 md:h-48 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center overflow-hidden">
-          <img 
-            src="/doctor.jpg" 
-            alt="Doctor" 
-            className="w-full h-full object-cover"
-          />
+        <div className="hidden md:block ml-6">
+          <div className="w-40 h-40 md:w-48 md:h-48 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center overflow-hidden">
+            <img 
+              src="/doctor.jpg" 
+              alt="Doctor" 
+              className="w-full h-full object-cover"
+            />
+          </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Simple responsive SVG line chart (no dependencies)
 const LineChartCard = () => {
-  const data = [120, 180, 150, 220, 300, 260, 340, 320, 380, 360, 420, 410]; // visits per month (sample)
+  const [selectedView, setSelectedView] = useState('monthly'); // Added state for view
+  const data = [120, 180, 150, 220, 300, 260, 340, 320, 380, 360, 420, 410]; 
   const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   const { pathD, areaD, points } = useMemo(() => {
@@ -102,9 +123,24 @@ const LineChartCard = () => {
           <div className="text-base font-semibold text-gray-800">Medical center Visits Statistics</div>
           <div className="text-xs text-gray-500">Visits over the last 12 months</div>
         </div>
-        <div className="flex items-center text-emerald-600 text-xs font-medium">
-          <ArrowUpRightIcon className="w-4 h-4 mr-1" />
-          +8.2%
+        
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => setSelectedView('monthly')}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition ${
+              selectedView === 'monthly' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            Monthly
+          </button>
+          <button
+            onClick={() => setSelectedView('yearly')}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition ${
+              selectedView === 'yearly' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            Yearly
+          </button>
         </div>
       </div>
       <div className="px-2 py-4 md:px-4">
@@ -222,25 +258,25 @@ function Dashboard() {
               <PromoBanner />
             </div>
             <div className="grid grid-cols-2 gap-4">
-  <StatCard
-    icon={BuildingOffice2Icon}
-    value="200"
-    title="Total Patients"
-    sub="Updated today"
-  />
-  <StatCard
-    icon={UserGroupIcon}
-    value="126"
-    title="New Patients"
-    sub="Across all Funtions"
-  />
-  <StatCard
-    icon={UserGroupIcon}
-    value="36"
-    title="Staff"
-    sub="All units"
-  />
-</div>
+              <StatCard
+                icon={BuildingOffice2Icon}
+                value="200"
+                title="Total Patients"
+                sub="Updated today"
+              />
+              <StatCard
+                icon={UserGroupIcon}
+                value="126"
+                title="New Patients"
+                sub="Across all Funtions"
+              />
+              <StatCard
+                icon={UserGroupIcon}
+                value="36"
+                title="Staff"
+                sub="All units"
+              />
+            </div>
           </div>
 
           {/* Middle row: Chart + Doctors list */}
@@ -251,43 +287,6 @@ function Dashboard() {
             <div className="lg:col-span-1">
               <DoctorsListCard />
             </div>
-          </div>
-
-          {/* Quick actions */}
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-left hover:shadow-md transition">
-              <div className="flex items-center">
-                <div className="rounded-lg bg-red-50 text-red-600 p-2 mr-3">
-                  <CalendarDaysIcon className="w-6 h-6" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-gray-800">Schedule</div>
-                  <div className="text-xs text-gray-500">Create or view appointments</div>
-                </div>
-              </div>
-            </button>
-            <button className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-left hover:shadow-md transition">
-              <div className="flex items-center">
-                <div className="rounded-lg bg-red-50 text-red-600 p-2 mr-3">
-                  <ArrowUpRightIcon className="w-6 h-6" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-gray-800">Reports</div>
-                  <div className="text-xs text-gray-500">Insights and analytics</div>
-                </div>
-              </div>
-            </button>
-            <button className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-left hover:shadow-md transition">
-              <div className="flex items-center">
-                <div className="rounded-lg bg-red-50 text-red-600 p-2 mr-3">
-                  <TruckIcon className="w-6 h-6" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-gray-800">Ambulance</div>
-                  <div className="text-xs text-gray-500">Dispatch and tracking</div>
-                </div>
-              </div>
-            </button>
           </div>
         </div>
 

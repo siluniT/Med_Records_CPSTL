@@ -4,7 +4,7 @@ import { Home, Users } from 'lucide-react';
 
 const navItems = [
   { name: 'Dashboard', icon: Home, link: '/Dashboard' },
-  { name: 'Manage Patients', icon: Users, link: '' },
+  { name: 'Manage Patients', icon: Users, link: '/ManagePatients' },
 ];
 
 const AppSidebarNav = ({ onNavLinkClick, currentPage, isSidebarOpen }) => {

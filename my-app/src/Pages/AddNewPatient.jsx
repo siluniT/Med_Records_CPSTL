@@ -1,5 +1,6 @@
 // src/Pages/AddNewPatient.jsx
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   UserCircleIcon,
   ScaleIcon,
@@ -10,7 +11,9 @@ import {
   CheckCircleIcon,
   ClipboardDocumentListIcon,
   BeakerIcon,
-  AcademicCapIcon,
+  PlusIcon,
+  TrashIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { CheckIcon } from '@heroicons/react/24/solid';
 
@@ -25,8 +28,16 @@ const STEPS = [
   { label: 'Medical History', icon: ClipboardDocumentListIcon },
   { label: 'Lifestyle', icon: SunIcon },
   { label: 'Problems', icon: ExclamationCircleIcon },
-  { label: 'Screening & Exams', icon: AcademicCapIcon },
+  { label: 'Screening Tests', icon: BeakerIcon }, // updated label + icon
   { label: 'Treatment', icon: CheckCircleIcon }
+];
+
+// Common current problem options (checkboxes)
+const CURRENT_PROBLEM_OPTIONS = [
+  'Increased body weight',
+  'Blood sugar issues',
+  'Blood pressure issues',
+  'Poor vision',
 ];
 
 // CoreUI-style Stepper Component with Red Theme
@@ -148,6 +159,7 @@ const CardStepper = ({ steps, activeStep, onStepClick }) => {
     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
       {steps.map((step, index) => {
         const stepNumber = index + 1;
+        
         const isActive = stepNumber === activeStep;
         const isCompleted = stepNumber < activeStep;
         const isClickable = isCompleted;
@@ -228,8 +240,22 @@ const ProgressIndicator = ({ currentStep, totalSteps }) => {
   );
 };
 
+// Helper to build currentProblems string from entries
+const makeCurrentProblemsString = (entries = []) => {
+  const parts = entries
+    .map((e) => {
+      const items = Array.isArray(e.selected) && e.selected.length ? e.selected.join(', ') : '';
+      const details = e.details && e.details.trim() ? e.details.trim() : '';
+      if (!items && !details) return '';
+      return `• ${[items, details ? `— ${details}` : ''].join(' ').trim()}`;
+    })
+    .filter(Boolean);
+  return parts.join('\n');
+};
+
 // The main page component for adding a new patient
 function AddNewPatient() {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [stepperLayout, ] = useState('horizontal');
   const [formData, setFormData] = useState({
@@ -248,6 +274,9 @@ function AddNewPatient() {
     alcoholConsumption: '', smokingHabits: '',
     // Problems
     currentProblems: '',
+    currentProblemsEntries: [
+      { selected: [], details: '', customOptions: [], addingCustom: false, newCustomLabel: '' }
+    ],
     // Screening
     breastExamination: 'Not Done',
     papSmear: 'Not Done',
@@ -256,6 +285,7 @@ function AddNewPatient() {
   });
   const [errors, setErrors] = useState({});
 
+  // Generic input handler
   const handleChange = (e) => {
     const { name, value, checked, type } = e.target;
     if (type === 'checkbox') {
@@ -273,10 +303,113 @@ function AddNewPatient() {
         [name]: value,
       }));
     }
-    // Clear error when user types
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
+  };
+
+  // Step 5 helpers (dynamic problem sections)
+  const syncCurrentProblemsString = (entries) => {
+    return makeCurrentProblemsString(entries);
+  };
+
+  const handleRemoveProblemSection = (index) => {
+    setFormData((prev) => {
+      const entries = [...(prev.currentProblemsEntries || [])];
+      if (entries.length > 1) {
+        entries.splice(index, 1);
+      } else {
+        entries[0] = { selected: [], details: '', customOptions: [], addingCustom: false, newCustomLabel: '' };
+      }
+      return {
+        ...prev,
+        currentProblemsEntries: entries,
+        currentProblems: syncCurrentProblemsString(entries),
+      };
+    });
+  };
+
+  const handleToggleProblem = (index, option) => {
+    setFormData((prev) => {
+      const entries = [...(prev.currentProblemsEntries || [])];
+      const entry = { ...(entries[index] || { selected: [], details: '', customOptions: [] }) };
+      const selected = new Set(entry.selected || []);
+      if (selected.has(option)) selected.delete(option);
+      else selected.add(option);
+      entry.selected = Array.from(selected);
+      entries[index] = entry;
+      return {
+        ...prev,
+        currentProblemsEntries: entries,
+        currentProblems: syncCurrentProblemsString(entries),
+      };
+    });
+    if (errors.currentProblems) setErrors((prev) => ({ ...prev, currentProblems: '' }));
+  };
+
+  const handleEntryDetailsChange = (index, value) => {
+    setFormData((prev) => {
+      const entries = [...(prev.currentProblemsEntries || [])];
+      const entry = { ...(entries[index] || {}) };
+      entry.details = value;
+      entries[index] = entry;
+      return {
+        ...prev,
+        currentProblemsEntries: entries,
+        currentProblems: syncCurrentProblemsString(entries),
+      };
+    });
+    if (errors.currentProblems) setErrors((prev) => ({ ...prev, currentProblems: '' }));
+  };
+
+  // Custom issue handling within the "Issues" header (inline add)
+  const handleStartAddCustomOption = (index) => {
+    setFormData((prev) => {
+      const entries = [...prev.currentProblemsEntries];
+      const entry = { ...entries[index] };
+      entry.addingCustom = true;
+      entry.newCustomLabel = '';
+      entries[index] = entry;
+      return { ...prev, currentProblemsEntries: entries };
+    });
+  };
+
+  const handleCancelAddCustomOption = (index) => {
+    setFormData((prev) => {
+      const entries = [...prev.currentProblemsEntries];
+      const entry = { ...entries[index] };
+      entry.addingCustom = false;
+      entry.newCustomLabel = '';
+      entries[index] = entry;
+      return { ...prev, currentProblemsEntries: entries };
+    });
+  };
+
+  const handleCustomOptionInputChange = (index, value) => {
+    setFormData((prev) => {
+      const entries = [...prev.currentProblemsEntries];
+      const entry = { ...entries[index] };
+      entry.newCustomLabel = value;
+      entries[index] = entry;
+      return { ...prev, currentProblemsEntries: entries };
+    });
+  };
+
+  const handleConfirmAddCustomOption = (index) => {
+    setFormData((prev) => {
+      const entries = [...prev.currentProblemsEntries];
+      const entry = { ...entries[index] };
+      const label = (entry.newCustomLabel || '').trim();
+      if (!label) return prev;
+      const customOptions = Array.isArray(entry.customOptions) ? [...entry.customOptions] : [];
+      // Prevent duplicates across defaults and customs
+      if (!customOptions.includes(label) && !CURRENT_PROBLEM_OPTIONS.includes(label)) {
+        customOptions.push(label);
+      }
+      entry.customOptions = customOptions;
+      entry.addingCustom = false;
+      entry.newCustomLabel = '';
+      entries[index] = entry;
+      return { ...prev, currentProblemsEntries: entries };
+    });
   };
 
   const validateStep = (step) => {
@@ -293,11 +426,21 @@ function AddNewPatient() {
     }
 
     if (step === 2) {
-      // Physical Measurements
       if (!formData.height) newErrors.height = 'Height is required.';
       if (!formData.weight) newErrors.weight = 'Weight is required.';
       if (!formData.bmi) newErrors.bmi = 'BMI is required.';
       if (!formData.waist) newErrors.waist = 'Waist measurement is required.';
+    }
+
+    // Step 5 validation: ensure at least one problem selected or some details entered
+    if (step === 5) {
+      const entries = formData.currentProblemsEntries || [];
+      const anyInfo = entries.some(
+        (e) => (Array.isArray(e.selected) && e.selected.length > 0) || (e.details && e.details.trim())
+      );
+      if (!anyInfo) {
+        newErrors.currentProblems = 'Please select at least one problem or enter additional details.';
+      }
     }
 
     setErrors(newErrors);
@@ -322,7 +465,6 @@ function AddNewPatient() {
   };
 
   const handleStepClick = (stepNumber) => {
-    // Allow navigation to completed steps only
     if (stepNumber < currentStep) {
       setCurrentStep(stepNumber);
       setErrors({});
@@ -330,24 +472,32 @@ function AddNewPatient() {
   };
 
   const handleSubmit = () => {
-    console.log('Form Submitted:', formData);
-    alert('Patient details saved successfully!');
-    // Reset form
-    setCurrentStep(1);
-    setFormData({
-      registrationNo: '', name: '', epfNo: '', contactNo: '', gender: '', dateOfBirth: '', age: '',
-      height: '', weight: '', bmi: '', waist: '',
-      rbs: '', fbs: '', bp: '',
-      visionLeft: '', visionRight: '',
-      patientHistory: [], familyHistoryFather: [], familyHistoryMother: [], familyHistorySiblings: [],
-      otherPatientConditions: '', otherFatherConditions: '', otherMotherConditions: '', otherSiblingsConditions: '',
-      alcoholConsumption: '', smokingHabits: '',
-      currentProblems: '',
-      breastExamination: 'Not Done',
-      papSmear: 'Not Done',
-      treatmentPlan: '', smokingCessationAdvice: '', alcoholAbuseAdvice: '',
-    });
-    setErrors({});
+    try {
+      const existingPatients = JSON.parse(localStorage.getItem('patients') || '[]');
+
+      const newPatient = {
+        ...formData,
+        id: Date.now().toString(),
+        createdAt: new Date().toISOString(),
+        lastUpdated: new Date().toISOString()
+      };
+
+      const updatedPatients = [...existingPatients, newPatient];
+      localStorage.setItem('patients', JSON.stringify(updatedPatients));
+
+      console.log('Form Submitted:', newPatient);
+      
+      navigate('/ManagePatients', { 
+        state: { 
+          message: `Patient ${formData.name} has been successfully added!`,
+          type: 'success' 
+        } 
+      });
+
+    } catch (error) {
+      console.error('Error saving patient data:', error);
+      alert('Error saving patient data. Please try again.');
+    }
   };
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -382,7 +532,7 @@ function AddNewPatient() {
             {/* Progress Indicator */}
             <ProgressIndicator currentStep={currentStep} totalSteps={STEPS.length} />
 
-            {/* Stepper Component - Now with click functionality */}
+            {/* Stepper Component */}
             <div className="mb-8">
               {stepperLayout === 'horizontal' && (
                 <div className="hidden md:block">
@@ -483,7 +633,7 @@ function AddNewPatient() {
                   </h1>
 
                   {/* Physical Measurements Section */}
-                  <div >
+                  <div>
                     <SectionHeader icon={ScaleIcon} title="Physical Measurements" />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                       <div>
@@ -559,103 +709,104 @@ function AddNewPatient() {
               )}
 
               {/* Step 3: Medical History */}
-{currentStep === 3 && (
-    <div className="flex flex-col gap-6">
-        <h1 className="text-2xl font-semibold text-gray-800 flex items-center bg-red-50 p-4 rounded-lg border border-red-200 shadow-sm">
-            <ClipboardDocumentListIcon className="w-7 h-7 mr-3 text-red-500" />
-            Medical History
-        </h1>
+              {currentStep === 3 && (
+                <div className="flex flex-col gap-6">
+                  <h1 className="text-2xl font-semibold text-gray-800 flex items-center bg-red-50 p-4 rounded-lg border border-red-200 shadow-sm">
+                    <ClipboardDocumentListIcon className="w-7 h-7 mr-3 text-red-500" />
+                    Medical History
+                  </h1>
 
-        {/* Table for Patient and Family History */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-                {/* Table Header */}
-                <thead className="bg-red-50">
-                    <tr>
-                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">
+                  {/* Table for Patient and Family History */}
+                  <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      {/* Table Header */}
+                      <thead className="bg-red-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">
                             <h3 className="flex items-center">
-                                <UserCircleIcon className="w-4 h-4 mr-1 text-red-500" />
-                                Relation
+                              <UserCircleIcon className="w-4 h-4 mr-1 text-red-500" />
+                              Relation
                             </h3>
-                        </th>
-                        {commonMedicalConditions.map((condition) => (
+                          </th>
+                          {commonMedicalConditions.map((condition) => (
                             <th key={condition} className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">
-                                {condition}
+                              {condition}
                             </th>
-                        ))}
-                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                          ))}
+                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                             <h3 className="flex items-center">
-                                Other
+                              Other
                             </h3>
-                        </th>
-                    </tr>
-                </thead>
-                {/* Table Body */}
-                <tbody className="bg-white divide-y divide-gray-200">
-                    {/* Patient's History Row */}
-                    <tr className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Patient</td>
-                        {commonMedicalConditions.map((condition) => (
+                          </th>
+                        </tr>
+                      </thead>
+                      {/* Table Body */}
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {/* Patient's History Row */}
+                        <tr className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Patient</td>
+                          {commonMedicalConditions.map((condition) => (
                             <td key={`patient-${condition}-cell`} className="px-6 py-4 whitespace-nowrap text-center">
-                                <input
-                                    id={`patient-${condition}`}
-                                    name="patientHistory"
-                                    value={condition}
-                                    type="checkbox"
-                                    checked={formData.patientHistory.includes(condition)}
-                                    onChange={handleChange}
-                                    className="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500 cursor-pointer"
-                                />
-                            </td>
-                        ))}
-                        <td className="px-6 py-4">
-                            <textarea
-                                id="otherPatientConditions"
-                                name="otherPatientConditions"
-                                rows="1"
-                                value={formData.otherPatientConditions}
+                              <input
+                                id={`patient-${condition}`}
+                                name="patientHistory"
+                                value={condition}
+                                type="checkbox"
+                                checked={formData.patientHistory.includes(condition)}
                                 onChange={handleChange}
-                                className="w-full border rounded-md shadow-sm p-1 text-sm border-gray-300 focus:ring-2 focus:ring-red-500"
-                                placeholder="e.g., Asthma, Allergies"
+                                className="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500 cursor-pointer"
+                              />
+                            </td>
+                          ))}
+                          <td className="px-6 py-4">
+                            <textarea
+                              id="otherPatientConditions"
+                              name="otherPatientConditions"
+                              rows="1"
+                              value={formData.otherPatientConditions}
+                              onChange={handleChange}
+                              className="w-full border rounded-md shadow-sm p-1 text-sm border-gray-300 focus:ring-2 focus:ring-red-500"
+                              placeholder="e.g., Asthma, Allergies"
                             ></textarea>
-                        </td>
-                    </tr>
-                    
-                    {/* Family History Rows */}
-                    {['Father', 'Mother', 'Siblings'].map((relation) => (
-                        <tr key={relation} className="hover:bg-gray-50 transition-colors">
+                          </td>
+                        </tr>
+                        
+                        {/* Family History Rows */}
+                        {['Father', 'Mother', 'Siblings'].map((relation) => (
+                          <tr key={relation} className="hover:bg-gray-50 transition-colors">
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{relation}</td>
                             {commonMedicalConditions.map((condition) => (
-                                <td key={`${relation}-${condition}-cell`} className="px-6 py-4 whitespace-nowrap text-center">
-                                    <input
-                                        id={`${relation}-${condition}`}
-                                        name={`familyHistory${relation}`}
-                                        value={condition}
-                                        type="checkbox"
-                                        checked={formData[`familyHistory${relation}`].includes(condition)}
-                                        onChange={handleChange}
-                                        className="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500 cursor-pointer"
-                                    />
-                                </td>
+                              <td key={`${relation}-${condition}-cell`} className="px-6 py-4 whitespace-nowrap text-center">
+                                <input
+                                  id={`${relation}-${condition}`}
+                                  name={`familyHistory${relation}`}
+                                  value={condition}
+                                  type="checkbox"
+                                  checked={formData[`familyHistory${relation}`].includes(condition)}
+                                  onChange={handleChange}
+                                  className="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500 cursor-pointer"
+                                />
+                              </td>
                             ))}
                             <td className="px-6 py-4">
-                                <textarea
-                                    id={`other${relation}Conditions`}
-                                    name={`other${relation}Conditions`}
-                                    rows="1"
-                                    value={formData[`other${relation}Conditions`]}
-                                    onChange={handleChange}
-                                    className="w-full border rounded-md shadow-sm p-1 text-sm border-gray-300 focus:ring-2 focus:ring-red-500"
-                                    placeholder="e.g., Heart Disease"
-                                ></textarea>
+                              <textarea
+                                id={`other${relation}Conditions`}
+                                name={`other${relation}Conditions`}
+                                rows="1"
+                                value={formData[`other${relation}Conditions`]}
+                                onChange={handleChange}
+                                className="w-full border rounded-md shadow-sm p-1 text-sm border-gray-300 focus:ring-2 focus:ring-red-500"
+                                placeholder="e.g., Heart Disease"
+                              ></textarea>
                             </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-    </div>
-)}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
               {/* Step 4: Lifestyle & Habits */}
               {currentStep === 4 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
@@ -676,25 +827,125 @@ function AddNewPatient() {
                 </div>
               )}
 
-              {/* Step 5: Current Problems */}
+              {/* Step 5: Current Problems (UPDATED with inline + on Issues) */}
               {currentStep === 5 && (
                 <div>
                   <h1 className="text-xl font-semibold text-gray-800 mb-4 flex items-center bg-red-50 p-3 rounded-lg border border-red-200">
                     <ExclamationCircleIcon className="w-6 h-6 mr-2 text-red-500" />
                     Current Problems
                   </h1>
-                  <label htmlFor="currentProblems" className="block text-xs font-medium text-gray-700">Details of current health problems (e.g., Increased body weight, Blood sugar issues, Blood pressure issues, Poor vision)</label>
-                  <textarea id="currentProblems" name="currentProblems" rows="4" value={formData.currentProblems} onChange={handleChange} placeholder="Describe current symptoms and issues..." className={`mt-1 block w-full border rounded-md shadow-sm p-1 focus:ring-2 focus:ring-red-500 ${errors.currentProblems ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}></textarea>
-                  {errors.currentProblems && <p className="mt-1 text-xs text-red-500 flex items-center"><ExclamationCircleIcon className="w-3 h-3 mr-1" />{errors.currentProblems}</p>}
+
+                  <div className="space-y-4">
+                    {formData.currentProblemsEntries.map((entry, idx) => {
+                      const options = [...CURRENT_PROBLEM_OPTIONS, ...(entry.customOptions || [])];
+                      return (
+                        <div key={idx} className="relative border border-red-200 bg-red-50 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium text-gray-700">Issues</span>
+                            <div className="flex items-center gap-1">
+                              {/* Inline add custom issue */}
+                              <button
+                                type="button"
+                                onClick={() => handleStartAddCustomOption(idx)}
+                                className="inline-flex items-center text-red-600 hover:text-red-700 px-2 py-1 rounded"
+                                title="Add custom issue"
+                              >
+                                <PlusIcon className="w-5 h-5" />
+                              </button>
+                              {formData.currentProblemsEntries.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveProblemSection(idx)}
+                                  className="inline-flex items-center text-red-600 hover:text-red-700 px-2 py-1 rounded"
+                                  title="Remove this set"
+                                >
+                                  <TrashIcon className="w-5 h-5" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {entry.addingCustom && (
+                            <div className="mt-1 mb-2 flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={entry.newCustomLabel || ''}
+                                onChange={(e) => handleCustomOptionInputChange(idx, e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleConfirmAddCustomOption(idx);
+                                  }
+                                }}
+                                className="flex-1 border rounded-md p-1 text-sm focus:ring-2 focus:ring-red-500 border-gray-300 bg-white"
+                                placeholder="Enter custom issue label"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleConfirmAddCustomOption(idx)}
+                                className="inline-flex items-center justify-center px-2 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                                title="Add"
+                              >
+                                <CheckIcon className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleCancelAddCustomOption(idx)}
+                                className="inline-flex items-center justify-center px-2 py-2 text-gray-600 hover:text-gray-800"
+                                title="Cancel"
+                              >
+                                <XMarkIcon className="w-4 h-4" />
+                              </button>
+                            </div>
+                          )}
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                            {options.map((opt) => (
+                              <label key={opt} className="flex items-center bg-white rounded-md border border-red-200 px-3 py-2 shadow-sm">
+                                <input
+                                  type="checkbox"
+                                  checked={entry.selected.includes(opt)}
+                                  onChange={() => handleToggleProblem(idx, opt)}
+                                  className="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                                />
+                                <span className="ml-2 text-xs text-gray-800">{opt}</span>
+                              </label>
+                            ))}
+                          </div>
+
+                          <div className="mt-3">
+                            <label className="block text-xs font-medium text-gray-700">
+                              Additional details
+                            </label>
+                            <textarea
+                              rows={3}
+                              value={entry.details}
+                              onChange={(e) => handleEntryDetailsChange(idx, e.target.value)}
+                              className="mt-1 block w-full border rounded-md shadow-sm p-1 text-sm border-gray-300 focus:ring-2 focus:ring-red-500 bg-white"
+                              placeholder="Describe current symptoms and issues..."
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Validation message */}
+                    {errors.currentProblems && (
+                      <p className="text-xs text-red-600 flex items-center">
+                        <ExclamationCircleIcon className="w-3 h-3 mr-1" />
+                        {errors.currentProblems}
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
 
-              {/* Step 6: Screening & Exams */}
+              {/* Step 6: Screening Tests (updated icon + label) */}
               {currentStep === 6 && (
                 <div className="space-y-4">
                   <h1 className="text-xl font-semibold text-gray-800 flex items-center bg-red-50 p-3 rounded-lg border border-red-200">
-                    <AcademicCapIcon className="w-6 h-6 mr-2 text-red-500" />
-                    Screening & Exams
+                    <BeakerIcon className="w-6 h-6 mr-2 text-red-500" />
+                    Screening Tests
                   </h1>
                   {/* Breast Examination */}
                   <div className="bg-red-50 p-4 rounded-lg border border-red-200">

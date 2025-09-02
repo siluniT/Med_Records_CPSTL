@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Bell, Menu, X } from 'lucide-react';
 import NotificationPanel from './NotificationPanel';
 
-// Removed the old import and defined the path to the new image
+
 const defaultPublicProfileIcon = '/pro icon.png';
 
 const AppHeader = ({ onMenuToggle, isSidebarOpen }) => {

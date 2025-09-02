@@ -5,6 +5,7 @@ import Login from "./Pages/Login";
 import AddNewPatient from "./Pages/AddNewPatient"; 
 import ProfilePage from "./Pages/ProfilePage"; // Make sure this is imported
 import Dashboard from "./Pages/Dashboard"; // Make sure this is imported
+import ManagePatients from './Pages/ManagePatients';
 
 
 function App() {
@@ -17,6 +18,8 @@ function App() {
           <Route path="/AddNewPatient" element={<AddNewPatient />} />
           <Route path="/ProfilePage" element={<ProfilePage />} />
           <Route path="/Dashboard" element={<Dashboard />} />
+          <Route path="/ManagePatients" element={<ManagePatients />} />
+
 
         </Routes>
       </div>
