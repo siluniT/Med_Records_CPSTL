@@ -10,6 +10,8 @@ import {
   PhoneIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  ChartBarIcon,
+  CalendarDaysIcon,
 } from '@heroicons/react/24/outline';
 
 import AppSidebar from '../Components/AppSidebar';
@@ -17,6 +19,7 @@ import AppHeader from '../Components/AppHeader';
 import AppFooter from '../Components/AppFooter';
 import ViewPatientModal from '../Components/ViewPatientModal';
 import EditPatientModal from '../Components/EditPatientModal';
+import PatientComparisonModal from '../Components/PatientComparisonModal';
 
 // Status Badge Component
 const StatusBadge = ({ status }) => {
@@ -24,7 +27,7 @@ const StatusBadge = ({ status }) => {
     switch (status) {
       case 'Active':
         return 'bg-green-100 text-green-800 border-green-200';
-      case 'Deactivate':
+      case 'Inactivate':
         return 'bg-red-100 text-red-800 border-red-200';
       case 'In treatment':
         return 'bg-blue-100 text-blue-800 border-blue-200';
@@ -45,10 +48,12 @@ function ManagePatients() {
   const [filteredPatients, setFilteredPatients] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [activeTab] = useState('list'); // 'list' or 'comparison'
 
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isComparisonModalOpen, setIsComparisonModalOpen] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -57,7 +62,7 @@ function ManagePatients() {
   // Determine patient status (base/derived)
   const determinePatientStatus = (patient) => {
     if (patient.currentProblems && patient.currentProblems.length > 50) {
-      return 'Deactivate';
+      return 'Inactivate';
     } else if (patient.treatmentPlan && patient.treatmentPlan.length > 0) {
       return 'In treatment';
     }
@@ -127,6 +132,11 @@ function ManagePatients() {
     setIsEditModalOpen(true);
   };
 
+  const handleCompareMetrics = (patient) => {
+    setSelectedPatient(patient);
+    setIsComparisonModalOpen(true);
+  };
+
   const handleSaveEdit = (editedPatient) => {
     const status = editedPatient.manualStatus || determinePatientStatus(editedPatient);
     const updatedPatients = patients.map((p) =>
@@ -150,22 +160,22 @@ function ManagePatients() {
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
   const closeSidebar = () => setIsSidebarOpen(false);
 
-  // Row-by-row status toggle (On = Active/In treatment, Off = Deactivate)
+  // Row-by-row status toggle
   const handleToggleRowStatus = (patientId) => {
     const updated = patients.map((p) => {
       if (p.id !== patientId) return p;
 
       const current = p.manualStatus || determinePatientStatus(p);
       let nextStatus;
-      if (current === 'Deactivate') {
+      if (current === 'Inactivate') {
         nextStatus = p.treatmentPlan && p.treatmentPlan.length > 0 ? 'In treatment' : 'Active';
       } else {
-        nextStatus = 'Deactivate';
+        nextStatus = 'Inactivate';
       }
       return {
         ...p,
-        manualStatus: nextStatus, // persist manual override
-        status: nextStatus,       // display status
+        manualStatus: nextStatus,
+        status: nextStatus,
         lastUpdated: new Date().toISOString(),
       };
     });
@@ -194,6 +204,314 @@ function ManagePatients() {
     </button>
   );
 
+  // Get patients with health metrics for comparison
+  const getPatientsWithMetrics = () => {
+    return patients.filter(patient => 
+      patient.height || patient.weight || patient.bmi || patient.waist ||
+      patient.bp || patient.rbs || patient.fbs || patient.visionLeft || patient.visionRight
+    );
+  };
+
+  const renderListView = () => (
+    <>
+      {/* Search & Filter */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex-1">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search by name, registration no, EPF no, or contact..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            />
+            <MagnifyingGlassIcon className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <FunnelIcon className="w-5 h-5 text-gray-500" />
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+          >
+            <option value="all">All Status</option>
+            <option value="Inactivate">Inactivate</option>
+            <option value="In treatment">In-treatment</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="overflow-x-auto">
+        {currentPatients.length > 0 ? (
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reg. No</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Info</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age/Gender</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {currentPatients.map((patient) => {
+                const isOn = patient.status !== 'Inactivate';
+                return (
+                  <tr key={patient.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {patient.registrationNo}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{patient.name}</div>
+                        <div className="text-sm text-gray-500">EPF: {patient.epfNo}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center text-sm text-gray-900">
+                        <PhoneIcon className="w-4 h-4 mr-1 text-gray-400" />
+                        {patient.contactNo}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {patient.dateOfBirth ? `${calculateAge(patient.dateOfBirth)} yrs` : '—'} / {patient.gender || '—'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <StatusBadge status={patient.status} />
+                        <RowToggle
+                          on={isOn}
+                          onClick={() => handleToggleRowStatus(patient.id)}
+                          title={isOn ? 'Toggle OFF (Inactivate)' : 'Toggle ON (Active/In treatment)'}
+                        />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(patient.lastUpdated || Date.now()).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <div className="flex items-center justify-center space-x-2">
+                        <button
+                          onClick={() => handleView(patient)}
+                          className="p-1 text-blue-600 hover:bg-blue-100 rounded transition-colors"
+                          title="View Details"
+                        >
+                          <EyeIcon className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => handleEdit(patient)}
+                          className="p-1 text-yellow-600 hover:bg-yellow-100 rounded transition-colors"
+                          title="Edit"
+                        >
+                          <PencilIcon className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => handleCompareMetrics(patient)}
+                          className="p-1 text-purple-600 hover:bg-purple-100 rounded transition-colors"
+                          title="Compare Health Metrics"
+                        >
+                          <ChartBarIcon className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(patient.id)}
+                          className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
+                          title="Delete"
+                        >
+                          <TrashIcon className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        ) : (
+          <div className="text-center py-12">
+            <UserCircleIcon className="mx-auto h-12 w-12 text-gray-400" />
+            <p className="mt-2 text-sm text-gray-600">No patients found</p>
+            <p className="mt-1 text-xs text-gray-500">
+              {searchTerm || filterStatus !== 'all'
+                ? 'Try adjusting your search or filter criteria'
+                : 'Add a new patient to get started'}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-700">
+              Showing {indexOfFirstPatient + 1} to {Math.min(indexOfLastPatient, filteredPatients.length)} of {filteredPatients.length} patients
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className={`p-2 rounded ${
+                  currentPage === 1
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                }`}
+              >
+                <ChevronLeftIcon className="w-5 h-5" />
+              </button>
+
+              {[...Array(totalPages)].map((_, index) => {
+                const page = index + 1;
+                if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-1 rounded ${
+                        currentPage === page ? 'bg-red-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                } else if (page === currentPage - 2 || page === currentPage + 2) {
+                  return (
+                    <span key={page} className="px-1">
+                      ...
+                    </span>
+                  );
+                }
+                return null;
+              })}
+
+              <button
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className={`p-2 rounded ${
+                  currentPage === totalPages
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                }`}
+              >
+                <ChevronRightIcon className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  const renderComparisonView = () => {
+    const patientsWithMetrics = getPatientsWithMetrics();
+
+    return (
+      <div className="space-y-6">
+        {/* Comparison Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="bg-blue-50 rounded-lg p-6 border border-blue-200">
+            <div className="flex items-center">
+              <ChartBarIcon className="w-8 h-8 text-blue-600 mr-3" />
+              <div>
+                <p className="text-2xl font-bold text-blue-600">{patientsWithMetrics.length}</p>
+                <p className="text-sm text-gray-600">Patients with Health Data</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-green-50 rounded-lg p-6 border border-green-200">
+            <div className="flex items-center">
+              <CalendarDaysIcon className="w-8 h-8 text-green-600 mr-3" />
+              <div>
+                <p className="text-2xl font-bold text-green-600">
+                  {patientsWithMetrics.filter(p => p.monthlyData?.length > 0).length}
+                </p>
+                <p className="text-sm text-gray-600">With Monthly Tracking</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-purple-50 rounded-lg p-6 border border-purple-200">
+            <div className="flex items-center">
+              <CalendarDaysIcon className="w-8 h-8 text-purple-600 mr-3" />
+              <div>
+                <p className="text-2xl font-bold text-purple-600">
+                  {patientsWithMetrics.filter(p => p.yearlyData?.length > 0).length}
+                </p>
+                <p className="text-sm text-gray-600">With Yearly Tracking</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Patient Comparison Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {patientsWithMetrics.map((patient) => (
+            <div key={patient.id} className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900">{patient.name}</h4>
+                    <p className="text-sm text-gray-500">Reg: {patient.registrationNo}</p>
+                  </div>
+                  <StatusBadge status={patient.status} />
+                </div>
+
+                {/* Quick Health Metrics */}
+                <div className="space-y-2 mb-4">
+                  {patient.height && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Height:</span>
+                      <span className="font-medium">{patient.height} cm</span>
+                    </div>
+                  )}
+                  {patient.weight && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Weight:</span>
+                      <span className="font-medium">{patient.weight} kg</span>
+                    </div>
+                  )}
+                  {patient.bmi && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">BMI:</span>
+                      <span className="font-medium">{patient.bmi}</span>
+                    </div>
+                  )}
+                  {patient.bp && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">BP:</span>
+                      <span className="font-medium">{patient.bp}</span>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => handleCompareMetrics(patient)}
+                  className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-red-700 transition-colors flex items-center justify-center"
+                >
+                  <ChartBarIcon className="w-4 h-4 mr-2" />
+                  View Comparison
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {patientsWithMetrics.length === 0 && (
+          <div className="text-center py-12">
+            <ChartBarIcon className="mx-auto h-12 w-12 text-gray-400" />
+            <p className="mt-2 text-sm text-gray-600">No patients with health metrics found</p>
+            <p className="mt-1 text-xs text-gray-500">
+              Health metrics will appear here once patients have recorded data
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="flex h-screen bg-gray-100 font-sans">
       <AppSidebar isSidebarOpen={isSidebarOpen} onCloseSidebar={closeSidebar} currentPage="Manage Patients" />
@@ -216,198 +534,22 @@ function ManagePatients() {
                 </div>
               </div>
 
-              {/* Search & Filter */}
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Search by name, registration no, EPF no, or contact..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                    />
-                    <MagnifyingGlassIcon className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <FunnelIcon className="w-5 h-5 text-gray-500" />
-                  <select
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  >
-                    <option value="all">All Status</option>
-                    {/* Optional: add Active here if you want to filter Active explicitly */}
-                    {/* <option value="Active">Active</option> */}
-                    <option value="Deactivate">Deactivate</option>
-                    <option value="In treatment">In-treatment</option>
-                  </select>
-                </div>
+              {/* Tab Navigation */}
+              <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-4">
+                
+                
               </div>
+
+              {/* Tab Content */}
+              {activeTab === 'list' ? renderListView() : renderComparisonView()}
             </div>
-
-            {/* Table */}
-            <div className="overflow-x-auto">
-              {currentPatients.length > 0 ? (
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reg. No</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Info</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age/Gender</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {currentPatients.map((patient) => {
-                      const isOn = patient.status !== 'Deactivate';
-                      return (
-                        <tr key={patient.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {patient.registrationNo}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">{patient.name}</div>
-                              <div className="text-sm text-gray-500">EPF: {patient.epfNo}</div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center text-sm text-gray-900">
-                              <PhoneIcon className="w-4 h-4 mr-1 text-gray-400" />
-                              {patient.contactNo}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {patient.dateOfBirth ? `${calculateAge(patient.dateOfBirth)} yrs` : '—'} / {patient.gender || '—'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center gap-3">
-                              <StatusBadge status={patient.status} />
-                              <RowToggle
-                                on={isOn}
-                                onClick={() => handleToggleRowStatus(patient.id)}
-                                title={isOn ? 'Toggle OFF (Deactivate)' : 'Toggle ON (Active/In treatment)'}
-                              />
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {new Date(patient.lastUpdated || Date.now()).toLocaleDateString()}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-center">
-                            <div className="flex items-center justify-center space-x-2">
-                              <button
-                                onClick={() => handleView(patient)}
-                                className="p-1 text-blue-600 hover:bg-blue-100 rounded transition-colors"
-                                title="View Details"
-                              >
-                                <EyeIcon className="w-5 h-5" />
-                              </button>
-                              <button
-                                onClick={() => handleEdit(patient)}
-                                className="p-1 text-yellow-600 hover:bg-yellow-100 rounded transition-colors"
-                                title="Edit"
-                              >
-                                <PencilIcon className="w-5 h-5" />
-                              </button>
-                              <button
-                                onClick={() => handleDelete(patient.id)}
-                                className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
-                                title="Delete"
-                              >
-                                <TrashIcon className="w-5 h-5" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              ) : (
-                <div className="text-center py-12">
-                  <UserCircleIcon className="mx-auto h-12 w-12 text-gray-400" />
-                  <p className="mt-2 text-sm text-gray-600">No patients found</p>
-                  <p className="mt-1 text-xs text-gray-500">
-                    {searchTerm || filterStatus !== 'all'
-                      ? 'Try adjusting your search or filter criteria'
-                      : 'Add a new patient to get started'}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-700">
-                    Showing {indexOfFirstPatient + 1} to {Math.min(indexOfLastPatient, filteredPatients.length)} of {filteredPatients.length} patients
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                      disabled={currentPage === 1}
-                      className={`p-2 rounded ${
-                        currentPage === 1
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                      }`}
-                    >
-                      <ChevronLeftIcon className="w-5 h-5" />
-                    </button>
-
-                    {[...Array(totalPages)].map((_, index) => {
-                      const page = index + 1;
-                      if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
-                        return (
-                          <button
-                            key={page}
-                            onClick={() => setCurrentPage(page)}
-                            className={`px-3 py-1 rounded ${
-                              currentPage === page ? 'bg-red-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                            }`}
-                          >
-                            {page}
-                          </button>
-                        );
-                      } else if (page === currentPage - 2 || page === currentPage + 2) {
-                        return (
-                          <span key={page} className="px-1">
-                            ...
-                          </span>
-                        );
-                      }
-                      return null;
-                    })}
-
-                    <button
-                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                      disabled={currentPage === totalPages}
-                      className={`p-2 rounded ${
-                        currentPage === totalPages
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                      }`}
-                    >
-                      <ChevronRightIcon className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
         <AppFooter />
       </main>
 
-      {/* View Modal */}
+      {/* Modals */}
       <ViewPatientModal
         patient={selectedPatient}
         isOpen={isViewModalOpen}
@@ -418,12 +560,17 @@ function ManagePatients() {
         }}
       />
 
-      {/* Edit Modal */}
       <EditPatientModal
         patient={selectedPatient}
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         onSave={handleSaveEdit}
+      />
+
+      <PatientComparisonModal
+        patient={selectedPatient}
+        isOpen={isComparisonModalOpen}
+        onClose={() => setIsComparisonModalOpen(false)}
       />
     </div>
   );

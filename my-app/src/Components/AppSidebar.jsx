@@ -28,7 +28,8 @@ const AppSidebar = ({ isSidebarOpen, onCloseSidebar, currentPage }) => {
 <div className={`p-4 flex flex-col items-center justify-center border-b border-gray-200 ${isSidebarOpen ? 'w-64' : 'w-20'}`}>
   <div className="flex items-center"> {/* Flex container for logo and text */}
     <img
-      src="public/medi.jpeg" // Placeholder for clinic logo
+      src="public/medi.jpeg" 
+      
       alt="CPSTL MedRecord Logo"
       className={`object-cover transition-all duration-300 ${
         isSidebarOpen ? 'w-19 h-20 mr-2' : 'w-20 h-30' // Increased logo size when open and closed
