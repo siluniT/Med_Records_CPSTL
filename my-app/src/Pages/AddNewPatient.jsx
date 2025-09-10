@@ -32,7 +32,6 @@ const STEPS = [
   { label: 'Treatment', icon: CheckCircleIcon }
 ];
 
-// Common current problem options (checkboxes)
 const CURRENT_PROBLEM_OPTIONS = [
   'Increased body weight',
   'Blood sugar issues',
@@ -40,7 +39,7 @@ const CURRENT_PROBLEM_OPTIONS = [
   'Poor vision',
 ];
 
-// CoreUI-style Stepper Component with Red Theme
+
 const CStepper = ({ steps, activeStep, orientation = 'horizontal', onStepClick }) => {
   const isVertical = orientation === 'vertical';
   
@@ -153,7 +152,7 @@ const CStepper = ({ steps, activeStep, orientation = 'horizontal', onStepClick }
   );
 };
 
-// Alternative Card-based Stepper with Red Theme
+
 const CardStepper = ({ steps, activeStep, onStepClick }) => {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
@@ -209,7 +208,7 @@ const CardStepper = ({ steps, activeStep, onStepClick }) => {
   );
 };
 
-// Section header component with red icon
+
 const SectionHeader = ({ icon, title }) => {
   const IconComponent = icon;
   return (
@@ -220,7 +219,6 @@ const SectionHeader = ({ icon, title }) => {
   );
 };
 
-// Progress Indicator Component with Red Theme
 const ProgressIndicator = ({ currentStep, totalSteps }) => {
   const percentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
   
@@ -240,7 +238,7 @@ const ProgressIndicator = ({ currentStep, totalSteps }) => {
   );
 };
 
-// Helper to build currentProblems string from entries
+
 const makeCurrentProblemsString = (entries = []) => {
   const parts = entries
     .map((e) => {
@@ -253,7 +251,7 @@ const makeCurrentProblemsString = (entries = []) => {
   return parts.join('\n');
 };
 
-// The main page component for adding a new patient
+
 function AddNewPatient() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
@@ -306,7 +304,7 @@ function AddNewPatient() {
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
-  // Step 5 helpers (dynamic problem sections)
+
   const syncCurrentProblemsString = (entries) => {
     return makeCurrentProblemsString(entries);
   };
@@ -360,7 +358,7 @@ function AddNewPatient() {
     if (errors.currentProblems) setErrors((prev) => ({ ...prev, currentProblems: '' }));
   };
 
-  // Custom issue handling within the "Issues" header (inline add)
+ 
   const handleStartAddCustomOption = (index) => {
     setFormData((prev) => {
       const entries = [...prev.currentProblemsEntries];
@@ -400,7 +398,7 @@ function AddNewPatient() {
       const label = (entry.newCustomLabel || '').trim();
       if (!label) return prev;
       const customOptions = Array.isArray(entry.customOptions) ? [...entry.customOptions] : [];
-      // Prevent duplicates across defaults and customs
+
       if (!customOptions.includes(label) && !CURRENT_PROBLEM_OPTIONS.includes(label)) {
         customOptions.push(label);
       }
@@ -432,7 +430,6 @@ function AddNewPatient() {
       if (!formData.waist) newErrors.waist = 'Waist measurement is required.';
     }
 
-    // Step 5 validation: ensure at least one problem selected or some details entered
     if (step === 5) {
       const entries = formData.currentProblemsEntries || [];
       const anyInfo = entries.some(

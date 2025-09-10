@@ -16,7 +16,7 @@ import AppSidebar from '../Components/AppSidebar';
 import AppHeader from '../Components/AppHeader';
 import AppFooter from '../Components/AppFooter';
 
-// Small stat card
+
 const StatCard = ({ icon, title, value, sub }) => {
   const IconComponent = icon;
   return (
@@ -35,14 +35,13 @@ const StatCard = ({ icon, title, value, sub }) => {
   );
 };
 
-// Red promo banner
 const PromoBanner = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
-    }, 60000); // Update every minute
+    }, 60000); 
 
     return () => clearInterval(timer);
   }, []);
@@ -87,9 +86,9 @@ const PromoBanner = () => {
   );
 };
 
-// Simple responsive SVG line chart (no dependencies)
+
 const LineChartCard = () => {
-  const [selectedView, setSelectedView] = useState('monthly'); // Added state for view
+  const [selectedView, setSelectedView] = useState('monthly'); 
   const data = [120, 180, 150, 220, 300, 260, 340, 320, 380, 360, 420, 410]; 
   const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -152,11 +151,8 @@ const LineChartCard = () => {
             <line x1="24" y1="160" x2="656" y2="160" />
             <line x1="24" y1="216" x2="656" y2="216" />
           </g>
-          {/* Area */}
           <path d={areaD} fill="url(#areaFill)" />
-          {/* Line */}
           <path d={pathD} fill="none" stroke="#ef4444" strokeWidth="2.5" />
-          {/* Points */}
           {points.map((p, i) => (
             <g key={i}>
               <circle cx={p.x} cy={p.y} r="3.5" fill="#ef4444" />
@@ -242,17 +238,15 @@ function Dashboard() {
         <AppHeader onMenuToggle={toggleSidebar} isSidebarOpen={isSidebarOpen} />
 
         <div className="flex-1 overflow-y-auto p-4 lg:p-6">
-          {/* Page title and "Add Patient" button */}
+
           <div className="mb-4 flex items-center justify-between">
             <h1 className="text-2xl font-semibold text-gray-800">Dashboard</h1>
-            {/* The Link component handles navigation without a full page reload */}
             <Link to="/AddNewPatient" className="bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-red-700 transition flex items-center">
               <UserPlusIcon className="w-5 h-5 mr-2" />
               Add Patient
             </Link>
           </div>
 
-          {/* Top row: Promo + Stats */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2">
               <PromoBanner />
@@ -279,7 +273,6 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* Middle row: Chart + Doctors list */}
           <div className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2">
               <LineChartCard />

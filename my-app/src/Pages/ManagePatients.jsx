@@ -59,7 +59,6 @@ function ManagePatients() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const patientsPerPage = 10;
 
-  // Determine patient status (base/derived)
   const determinePatientStatus = (patient) => {
     if (patient.currentProblems && patient.currentProblems.length > 50) {
       return 'Inactivate';
@@ -160,7 +159,6 @@ function ManagePatients() {
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
   const closeSidebar = () => setIsSidebarOpen(false);
 
-  // Row-by-row status toggle
   const handleToggleRowStatus = (patientId) => {
     const updated = patients.map((p) => {
       if (p.id !== patientId) return p;
@@ -184,7 +182,6 @@ function ManagePatients() {
     localStorage.setItem('patients', JSON.stringify(updated));
   };
 
-  // Small toggle UI
   const RowToggle = ({ on, onClick, title }) => (
     <button
       type="button"
@@ -204,7 +201,6 @@ function ManagePatients() {
     </button>
   );
 
-  // Get patients with health metrics for comparison
   const getPatientsWithMetrics = () => {
     return patients.filter(patient => 
       patient.height || patient.weight || patient.bmi || patient.waist ||
@@ -214,7 +210,7 @@ function ManagePatients() {
 
   const renderListView = () => (
     <>
-      {/* Search & Filter */}
+  
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="flex-1">
           <div className="relative">
@@ -446,7 +442,6 @@ function ManagePatients() {
           </div>
         </div>
 
-        {/* Patient Comparison Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {patientsWithMetrics.map((patient) => (
             <div key={patient.id} className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
@@ -459,7 +454,6 @@ function ManagePatients() {
                   <StatusBadge status={patient.status} />
                 </div>
 
-                {/* Quick Health Metrics */}
                 <div className="space-y-2 mb-4">
                   {patient.height && (
                     <div className="flex justify-between text-sm">
@@ -534,13 +528,11 @@ function ManagePatients() {
                 </div>
               </div>
 
-              {/* Tab Navigation */}
               <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-4">
                 
                 
               </div>
 
-              {/* Tab Content */}
               {activeTab === 'list' ? renderListView() : renderComparisonView()}
             </div>
           </div>

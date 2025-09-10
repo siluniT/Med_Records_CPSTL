@@ -1,9 +1,9 @@
 // src/Pages/ProfilePage.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import AppSidebar from '../Components/AppSidebar'; // Fixed import path
-import AppHeader from '../Components/AppHeader';   // Fixed import path
-import AppFooter from '../Components/AppFooter';   // Fixed import path
+import AppSidebar from '../Components/AppSidebar'; 
+import AppHeader from '../Components/AppHeader';   
+import AppFooter from '../Components/AppFooter';   
 
 function ProfilePage() {
   const [userProfile, setUserProfile] = useState(null);
@@ -23,7 +23,6 @@ function ProfilePage() {
         setUserProfile(null);
       }
     } else {
-      // If no user data, redirect to login
       navigate('/ProfilePage');
     }
 
@@ -73,7 +72,6 @@ function ProfilePage() {
     fileInputRef.current.click();
   };
 
-  // Helper function to render a detail row
   const DetailRow = ({ label, value }) => (
     <p className="flex justify-between items-start">
       <span className="font-medium text-gray-600 mr-2">{label}:</span>
@@ -81,7 +79,6 @@ function ProfilePage() {
     </p>
   );
 
-  // If no user profile data is found, display a message and redirect logic
   if (!userProfile) {
     return (
       <div className="flex justify-center items-center h-screen bg-gray-100 p-6">
@@ -103,7 +100,7 @@ function ProfilePage() {
             <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center tracking-tight">Profile</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-7">
-              {/* Left Column: Profile Picture & Shortcuts */}
+
               <div className="md:col-span-1 flex flex-col items-center p-4 border border-gray-200 rounded-lg bg-gray-50 shadow-sm">
                 <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-blue-300 shadow-md mb-4">
                   <img
@@ -129,7 +126,6 @@ function ProfilePage() {
 
                 <h3 className="text-xl font-semibold text-gray-800 mb-1">{userProfile.Emp_name || userProfile.name || userProfile.firstName || 'User Name'}</h3>
 
-                {/* Shortcuts Section */}
                 <div className="w-full mt-6">
                   <h4 className="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">Shortcuts</h4>
                   <ul className="space-y-2 text-sm text-gray-700">
@@ -149,9 +145,7 @@ function ProfilePage() {
                 </div>
               </div>
 
-              {/* Right Columns: Personal, Internet */}
               <div className="md:col-span-2 grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Personal Information */}
                 <div className="p-4 border border-gray-200 rounded-lg bg-gray-50 shadow-sm col-span-1 lg:col-span-2">
                   <h4 className="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">Personal Information</h4>
                   <div className="space-y-2 text-sm text-gray-700">

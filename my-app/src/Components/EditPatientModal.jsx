@@ -24,7 +24,7 @@ const EditPatientModal = ({ patient, isOpen, onClose, onSave }) => {
     if (patient) {
       setEditedPatient({
         ...patient,
-        // Ensure arrays are properly initialized
+        
         patientHistory: Array.isArray(patient.patientHistory) ? patient.patientHistory : [],
         familyHistoryFather: Array.isArray(patient.familyHistoryFather) ? patient.familyHistoryFather : [],
         familyHistoryMother: Array.isArray(patient.familyHistoryMother) ? patient.familyHistoryMother : [],

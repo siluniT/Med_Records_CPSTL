@@ -9,7 +9,7 @@ const LoginCard = ({ children }) => {
     <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
       <div className="flex flex-col items-center mb-6">
         <img
-          src="/public/cpstl.png" // Ensure this path is correct relative to your public folder
+          src="/public/cpstl.png" 
           alt="Company Logo"
           className="w-24 h-24 mb-4 rounded-full object-cover"
           onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/96x96/cccccc/333333?text=Logo"; }}
@@ -22,13 +22,11 @@ const LoginCard = ({ children }) => {
   );
 };
 
-// The LoginForm component is now defined within this file
 const LoginForm = ({ onLoginSuccess }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  // Removed "const navigate = useNavigate();" as it's not used here
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -52,7 +50,6 @@ const LoginForm = ({ onLoginSuccess }) => {
       
       if (data.status === 'success') {
         localStorage.setItem('userData', JSON.stringify(data));
-        // Pass the token to the parent handler
         onLoginSuccess(data.token); 
       } else {
         setMessage(data.message || 'Login failed. Please try again.');
@@ -67,7 +64,6 @@ const LoginForm = ({ onLoginSuccess }) => {
   };
 
   return (
-    // Reduced vertical spacing between form elements
     <form onSubmit={handleSubmit} className="space-y-2">
       <div>
         <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
@@ -148,7 +144,6 @@ const LoginForm = ({ onLoginSuccess }) => {
   );
 };
 
-// The main Login page component that uses the other two
 function Login() {
   const navigate = useNavigate();
 

@@ -6,7 +6,7 @@ const AppSidebar = ({ isSidebarOpen, onCloseSidebar, currentPage }) => {
   // Retrieve user data from localStorage
   const storeData = localStorage.getItem('userData');
   const userData = storeData ? JSON.parse(storeData) : null;
-  const userRole = userData?.role_type || 'Role'; // Default role if not found
+  const userRole = userData?.role_type || 'Role'; 
 
   return (
     <>
@@ -26,7 +26,7 @@ const AppSidebar = ({ isSidebarOpen, onCloseSidebar, currentPage }) => {
       >
         {/* Logo and Clinic Name Section */}
 <div className={`p-4 flex flex-col items-center justify-center border-b border-gray-200 ${isSidebarOpen ? 'w-64' : 'w-20'}`}>
-  <div className="flex items-center"> {/* Flex container for logo and text */}
+  <div className="flex items-center"> 
     <img
       src="public/medi.jpeg" 
       
