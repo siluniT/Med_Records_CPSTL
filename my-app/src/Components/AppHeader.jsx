@@ -1,3 +1,4 @@
+// src/Components/AppHeader.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Menu, X } from 'lucide-react';
@@ -92,7 +93,7 @@ const AppHeader = ({ onMenuToggle, isSidebarOpen }) => {
   };
 
   return (
-    <header className="flex items-center justify-between p-4 bg-white shadow-md rounded-bl-lg transition-all duration-300 relative z-10">
+    <header className="flex items-center justify-between p-4 bg-white shadow-md rounded-bl-lg transition-all duration-300 relative z-50">
       <div className="flex items-center">
         <button
           onClick={onMenuToggle}
@@ -154,7 +155,7 @@ const AppHeader = ({ onMenuToggle, isSidebarOpen }) => {
           </div>
 
           {isDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 focus:outline-none">
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 focus:outline-none z-40">
               <button
                 onClick={handleProfileClick}
                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"

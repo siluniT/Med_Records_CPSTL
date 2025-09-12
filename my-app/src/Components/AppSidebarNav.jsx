@@ -16,7 +16,7 @@ const AppSidebarNav = ({ onNavLinkClick, currentPage, isSidebarOpen }) => {
 
   return (
     <nav className="flex-1 px-4 py-6 text-gray-900 space-y-2">
-      {/* Main Navigation Items */}
+      
       {navItems.map((item) => (
         <Link
           key={item.name}

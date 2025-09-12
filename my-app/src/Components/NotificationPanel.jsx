@@ -36,7 +36,6 @@ const NotificationPanel = ({ isOpen, onClose }) => {
   };
 
   const getFilteredNotifications = () => {
-    // For this example, "Mentions" tab is not implemented but can be expanded upon.
     return notifications;
   };
 
@@ -66,7 +65,7 @@ const NotificationPanel = ({ isOpen, onClose }) => {
             onClick={() => setActiveTab('mentions')}
             className={`py-2 px-4 ${activeTab === 'mentions' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
           >
-            Mentions
+            Read
           </button>
         </div>
       </div>
