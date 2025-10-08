@@ -1,5 +1,5 @@
 // src/Components/ViewStaffModal.jsx
-import React from 'react';
+import React from "react";
 import {
   UserCircleIcon,
   EyeIcon,
@@ -10,7 +10,7 @@ import {
   CalendarIcon,
   DocumentTextIcon,
   PencilIcon,
-} from '@heroicons/react/24/outline';
+} from "@heroicons/react/24/outline";
 
 const ViewStaffModal = ({ staff, isOpen, onClose, onEdit }) => {
   if (!isOpen || !staff) return null;
@@ -31,9 +31,10 @@ const ViewStaffModal = ({ staff, isOpen, onClose, onEdit }) => {
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              
-              
-              <button onClick={onClose} className="p-2 hover:bg-red-700 rounded-full transition-colors">
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-red-700 rounded-full transition-colors"
+              >
                 <XMarkIcon className="w-6 h-6" />
               </button>
             </div>
@@ -63,21 +64,27 @@ const ViewStaffModal = ({ staff, isOpen, onClose, onEdit }) => {
               <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-500">Full Name</p>
-                  <p className="font-semibold text-gray-900">{staff.name || '—'}</p>
+                  <p className="font-semibold text-gray-900">
+                    {staff.name || "—"}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">EPF Number</p>
-                  <p className="font-semibold text-gray-900">{staff.epfNumber || '—'}</p>
+                  <p className="font-semibold text-gray-900">
+                    {staff.epfNumber || "—"}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Gender</p>
-                  <p className="font-semibold text-gray-900">{staff.gender || '—'}</p>
+                  <p className="font-semibold text-gray-900">
+                    {staff.gender || "—"}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Contact Number</p>
                   <p className="font-semibold text-gray-900 flex items-center">
                     <PhoneIcon className="w-4 h-4 mr-1 text-gray-400" />
-                    {staff.contactNo || '—'}
+                    {staff.contactNo || "—"}
                   </p>
                 </div>
               </div>
@@ -93,27 +100,36 @@ const ViewStaffModal = ({ staff, isOpen, onClose, onEdit }) => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <p className="text-sm text-gray-500">Designation</p>
-                <p className="font-semibold text-gray-900">{staff.designation || '—'}</p>
+                <p className="font-semibold text-gray-900">
+                  {staff.designation || "—"}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Experience</p>
                 <p className="font-semibold text-gray-900">
-                  {staff.experience ? `${staff.experience} years` : '—'}
+                  {staff.experience ? `${staff.experience} years` : "—"}
                 </p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Primary Specialization</p>
-                <p className="font-semibold text-gray-900">{staff.primarySpecialization || '—'}</p>
+                <p className="font-semibold text-gray-900">
+                  {staff.primarySpecialization || "—"}
+                </p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Secondary Specialization</p>
-                <p className="font-semibold text-gray-900">{staff.secondarySpecialization || '—'}</p>
+                <p className="text-sm text-gray-500">
+                  Secondary Specialization
+                </p>
+                <p className="font-semibold text-gray-900">
+                  {staff.secondarySpecialization || "—"}
+                </p>
               </div>
             </div>
           </div>
 
           {/* License Information */}
-          {(staff.designation === 'Doctor' || staff.designation === 'Nurse') && (
+          {(staff.designation === "Doctor" ||
+            staff.designation === "Nurse") && (
             <div className="mb-6 bg-purple-50 rounded-xl p-6 border border-purple-200">
               <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
                 <DocumentTextIcon className="w-6 h-6 mr-2 text-purple-600" />
@@ -121,14 +137,20 @@ const ViewStaffModal = ({ staff, isOpen, onClose, onEdit }) => {
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
-                  <p className="text-sm text-gray-500">Medical License Number</p>
-                  <p className="font-semibold text-gray-900">{staff.medicalLicenseNumber || '—'}</p>
+                  <p className="text-sm text-gray-500">
+                    Medical License Number
+                  </p>
+                  <p className="font-semibold text-gray-900">
+                    {staff.medicalLicenseNumber || "—"}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">License Expiry Date</p>
                   <p className="font-semibold text-gray-900 flex items-center">
                     <CalendarIcon className="w-4 h-4 mr-1 text-gray-400" />
-                    {staff.licenseExpiryDate ? new Date(staff.licenseExpiryDate).toLocaleDateString() : '—'}
+                    {staff.licenseExpiryDate
+                      ? new Date(staff.licenseExpiryDate).toLocaleDateString()
+                      : "—"}
                   </p>
                 </div>
               </div>
@@ -143,33 +165,39 @@ const ViewStaffModal = ({ staff, isOpen, onClose, onEdit }) => {
             </h3>
             <div>
               <p className="font-semibold text-gray-900 whitespace-pre-line">
-                {staff.qualifications || 'No qualifications listed'}
+                {staff.qualifications || "No qualifications listed"}
               </p>
             </div>
           </div>
 
           {/* Additional Information */}
           <div className="mb-6 bg-gray-50 rounded-xl p-6 border border-gray-200">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">Additional Information</h3>
+            <h3 className="text-xl font-bold text-gray-800 mb-4">
+              Additional Information
+            </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <p className="text-sm text-gray-500">Status</p>
                 <p className="font-semibold text-gray-900">
-                  <span className={`px-3 py-1 text-xs font-medium rounded-full border ${
-                    staff.status === 'Active' 
-                      ? 'bg-green-100 text-green-800 border-green-200'
-                      : staff.status === 'On Leave'
-                      ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
-                      : 'bg-red-100 text-red-800 border-red-200'
-                  }`}>
-                    {staff.status || 'Active'}
+                  <span
+                    className={`px-3 py-1 text-xs font-medium rounded-full border ${
+                      staff.status === "Active"
+                        ? "bg-green-100 text-green-800 border-green-200"
+                        : staff.status === "On Leave"
+                        ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+                        : "bg-red-100 text-red-800 border-red-200"
+                    }`}
+                  >
+                    {staff.status || "Active"}
                   </span>
                 </p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Date Added</p>
                 <p className="font-semibold text-gray-900">
-                  {staff.createdDate ? new Date(staff.createdDate).toLocaleDateString() : '—'}
+                  {staff.createdDate
+                    ? new Date(staff.createdDate).toLocaleDateString()
+                    : "—"}
                 </p>
               </div>
             </div>

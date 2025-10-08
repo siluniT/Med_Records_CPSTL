@@ -1,104 +1,82 @@
-// src/Components/AppHeader.jsx
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Bell, Menu, X } from 'lucide-react';
-import NotificationPanel from './NotificationPanel';
+// frontend/src/components/AppHeader.jsx
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { Bell, Menu, X } from "lucide-react";
+import NotificationPanel from "./NotificationPanel";
 
-
-const defaultPublicProfileIcon = '/pro icon.png';
+const defaultPublicProfileIcon = "/pro_icon.png"; // Place in public folder
 
 const AppHeader = ({ onMenuToggle, isSidebarOpen }) => {
   const [userData, setUserData] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [profileImage, setProfileImage] = useState(null);
   const dropdownRef = useRef(null);
   const notificationRef = useRef(null);
 
   const navigate = useNavigate();
 
+  // Load userData from localStorage
   useEffect(() => {
-    const storedData = localStorage.getItem('userData');
+    const storedData = localStorage.getItem("userData");
     if (storedData) {
-      setUserData(JSON.parse(storedData));
-    }
-
-    const storedProfileImage = localStorage.getItem('profileImage');
-    if (storedProfileImage) {
-      setProfileImage(storedProfileImage);
+      try {
+        setUserData(JSON.parse(storedData));
+      } catch (err) {
+        console.error("Error parsing userData:", err);
+      }
     }
 
     const handleStorageChange = (event) => {
-      if (event.key === 'profileImage') {
-        setProfileImage(event.newValue);
-      }
-      if (event.key === 'userData') {
+      if (event.key === "userData") {
         try {
           setUserData(JSON.parse(event.newValue));
-        } catch (error) {
-          console.error("Error parsing updated userData from localStorage in AppHeader:", error);
+        } catch {
           setUserData(null);
         }
       }
     };
 
-    window.addEventListener('storage', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
+  // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target))
         setIsDropdownOpen(false);
-      }
-      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target)
+      )
         setIsNotificationsOpen(false);
-      }
     };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const user = userData;
-
-  const handleUserIconClick = () => {
-    setIsNotificationsOpen(false);
-    setIsDropdownOpen(prev => !prev);
-  };
-
-  const handleNotificationsClick = () => {
-    setIsDropdownOpen(false);
-    setIsNotificationsOpen(prev => !prev);
-  };
-
   const handleLogout = () => {
-    localStorage.removeItem('userData');
-    localStorage.removeItem('profileImage');
+    localStorage.clear();
     setUserData(null);
-    setProfileImage(null);
     setIsDropdownOpen(false);
-    navigate('/', { replace: true });
+    navigate("/", { replace: true });
     alert("Logged out successfully!");
   };
 
   const handleProfileClick = () => {
     setIsDropdownOpen(false);
-    navigate('/ProfilePage');
+    navigate("/ProfilePage");
   };
 
+  const profileImage = userData?.profile_image || defaultPublicProfileIcon;
+
   return (
-    <header className="flex items-center justify-between p-4 bg-white shadow-md rounded-bl-lg transition-all duration-300 relative z-50">
+    <header className="flex items-center justify-between p-4 bg-white shadow-md rounded-bl-lg relative z-10">
       <div className="flex items-center">
         <button
           onClick={onMenuToggle}
           className="mr-4 p-2 rounded-md bg-gray-100 hover:bg-gray-200 transition"
-          aria-label="Toggle menu"
         >
           {isSidebarOpen ? (
             <X className="w-6 h-6 text-red-600" />
@@ -109,11 +87,14 @@ const AppHeader = ({ onMenuToggle, isSidebarOpen }) => {
       </div>
 
       <div className="flex items-center space-x-4">
+        {/* Notifications */}
         <div className="relative" ref={notificationRef}>
           <button
-            onClick={handleNotificationsClick}
+            onClick={() => {
+              setIsDropdownOpen(false);
+              setIsNotificationsOpen((prev) => !prev);
+            }}
             className="relative p-2 rounded-full hover:bg-gray-100"
-            aria-label="Notifications"
           >
             <Bell className="w-6 h-6 text-red-600 cursor-pointer hover:text-red-800" />
             {unreadCount > 0 && (
@@ -134,32 +115,26 @@ const AppHeader = ({ onMenuToggle, isSidebarOpen }) => {
         <div className="relative" ref={dropdownRef}>
           <div
             className="flex items-center space-x-2 cursor-pointer"
-            onClick={handleUserIconClick}
-            aria-haspopup="true"
-            aria-expanded={isDropdownOpen}
+            onClick={() => {
+              setIsNotificationsOpen(false);
+              setIsDropdownOpen((prev) => !prev);
+            }}
           >
-            {profileImage ? (
-              <img
-                src={profileImage}
-                alt="Profile"
-                className="w-8 h-8 rounded-full object-cover border-2 border-red-600"
-              />
-            ) : (
-              <img
-                src={defaultPublicProfileIcon}
-                alt="Default Profile"
-                className="w-8 h-8 rounded-full object-cover border-2 border-red-600"
-              />
-            )}
-            <span className="text-gray-700 font-medium">{user?.user?.role_type || 'Guest'}</span>
+            <img
+              src={profileImage}
+              alt="Profile"
+              className="w-8 h-8 rounded-full object-cover border-2 border-red-600"
+            />
+            <span className="text-gray-700 font-medium">
+              {userData?.role_type || "Doctor"}
+            </span>
           </div>
 
           {isDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 focus:outline-none z-40">
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 focus:outline-none">
               <button
                 onClick={handleProfileClick}
                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                role="menuitem"
               >
                 Profile
               </button>
@@ -167,7 +142,6 @@ const AppHeader = ({ onMenuToggle, isSidebarOpen }) => {
               <button
                 onClick={handleLogout}
                 className="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left font-medium"
-                role="menuitem"
               >
                 Logout
               </button>

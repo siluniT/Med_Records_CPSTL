@@ -1,5 +1,5 @@
 // src/Components/EditStaffModal.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   UserCircleIcon,
   XMarkIcon,
@@ -8,34 +8,34 @@ import {
   PhotoIcon,
   CheckIcon,
   DocumentTextIcon,
-} from '@heroicons/react/24/outline';
+} from "@heroicons/react/24/outline";
 
 const EditStaffModal = ({ staff, isOpen, onClose, onSave }) => {
   const [editedStaff, setEditedStaff] = useState({});
   const [formErrors, setFormErrors] = useState({});
 
   const specializations = [
-    'General Practitioner',
-    'Cardiologist',
-    'Dermatologist',
-    'Neurologist',
-    'Surgeon',
-    'Pediatrician',
-    'Psychiatrist',
-    'Gynecologist',
-    'Radiologist',
-    'Nurse',
-    'Lab Technician',
-    'Pharmacist',
-    'Other',
+    "General Practitioner",
+    "Cardiologist",
+    "Dermatologist",
+    "Neurologist",
+    "Surgeon",
+    "Pediatrician",
+    "Psychiatrist",
+    "Gynecologist",
+    "Radiologist",
+    "Nurse",
+    "Lab Technician",
+    "Pharmacist",
+    "Other",
   ];
 
   const designations = [
-    'Doctor',
-    'Nurse',
-    'Administrator',
-    'Lab Technician',
-    'Pharmacist',
+    "Doctor",
+    "Nurse",
+    "Administrator",
+    "Lab Technician",
+    "Pharmacist",
   ];
 
   useEffect(() => {
@@ -56,7 +56,7 @@ const EditStaffModal = ({ staff, isOpen, onClose, onSave }) => {
     if (formErrors[field]) {
       setFormErrors((prev) => ({
         ...prev,
-        [field]: '',
+        [field]: "",
       }));
     }
   };
@@ -77,36 +77,50 @@ const EditStaffModal = ({ staff, isOpen, onClose, onSave }) => {
 
   const validateForm = () => {
     const errors = {};
-    
-    if (!editedStaff.name || editedStaff.name.trim() === '') {
-      errors.name = 'Full Name is required.';
+
+    if (!editedStaff.name || editedStaff.name.trim() === "") {
+      errors.name = "Full Name is required.";
     }
-    
-    if (!editedStaff.epfNumber || editedStaff.epfNumber.trim() === '') {
-      errors.epfNumber = 'EPF Number is required.';
+
+    if (!editedStaff.epfNumber || editedStaff.epfNumber.trim() === "") {
+      errors.epfNumber = "EPF Number is required.";
     }
-    
+
     if (!editedStaff.designation) {
-      errors.designation = 'Designation is required.';
+      errors.designation = "Designation is required.";
     }
-    
-    if (!editedStaff.contactNo || editedStaff.contactNo.trim() === '') {
-      errors.contactNo = 'Phone Number is required.';
+
+    if (!editedStaff.contactNo || editedStaff.contactNo.trim() === "") {
+      errors.contactNo = "Phone Number is required.";
     } else if (!/^[+]?[\d\s-()]+$/.test(editedStaff.contactNo)) {
-      errors.contactNo = 'Please enter a valid phone number.';
+      errors.contactNo = "Please enter a valid phone number.";
     }
 
-    if (editedStaff.designation === 'Doctor' || editedStaff.designation === 'Nurse') {
-      if (!editedStaff.medicalLicenseNumber || editedStaff.medicalLicenseNumber.trim() === '') {
-        errors.medicalLicenseNumber = 'Medical License Number is required for Doctors and Nurses.';
+    if (
+      editedStaff.designation === "Doctor" ||
+      editedStaff.designation === "Nurse"
+    ) {
+      if (
+        !editedStaff.medicalLicenseNumber ||
+        editedStaff.medicalLicenseNumber.trim() === ""
+      ) {
+        errors.medicalLicenseNumber =
+          "Medical License Number is required for Doctors and Nurses.";
       }
-      if (!editedStaff.qualifications || editedStaff.qualifications.trim() === '') {
-        errors.qualifications = 'Qualifications are required for Doctors and Nurses.';
+      if (
+        !editedStaff.qualifications ||
+        editedStaff.qualifications.trim() === ""
+      ) {
+        errors.qualifications =
+          "Qualifications are required for Doctors and Nurses.";
       }
     }
 
-    if (editedStaff.experience && (isNaN(editedStaff.experience) || editedStaff.experience < 0)) {
-      errors.experience = 'Please enter a valid experience in years.';
+    if (
+      editedStaff.experience &&
+      (isNaN(editedStaff.experience) || editedStaff.experience < 0)
+    ) {
+      errors.experience = "Please enter a valid experience in years.";
     }
 
     setFormErrors(errors);
@@ -133,7 +147,10 @@ const EditStaffModal = ({ staff, isOpen, onClose, onSave }) => {
                 <p className="text-red-100 text-sm">Editing: {staff.name}</p>
               </div>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-red-700 rounded-full transition-colors">
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-red-700 rounded-full transition-colors"
+            >
               <XMarkIcon className="w-6 h-6" />
             </button>
           </div>
@@ -154,13 +171,15 @@ const EditStaffModal = ({ staff, isOpen, onClose, onSave }) => {
                 </label>
                 <input
                   type="text"
-                  value={editedStaff.name || ''}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  value={editedStaff.name || ""}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
                   className={`w-full px-3 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 ${
-                    formErrors.name ? 'border-red-500' : 'border-gray-300'
+                    formErrors.name ? "border-red-500" : "border-gray-300"
                   }`}
                 />
-                {formErrors.name && <p className="mt-1 text-sm text-red-500">{formErrors.name}</p>}
+                {formErrors.name && (
+                  <p className="mt-1 text-sm text-red-500">{formErrors.name}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -168,19 +187,27 @@ const EditStaffModal = ({ staff, isOpen, onClose, onSave }) => {
                 </label>
                 <input
                   type="text"
-                  value={editedStaff.epfNumber || ''}
-                  onChange={(e) => handleInputChange('epfNumber', e.target.value)}
+                  value={editedStaff.epfNumber || ""}
+                  onChange={(e) =>
+                    handleInputChange("epfNumber", e.target.value)
+                  }
                   className={`w-full px-3 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 ${
-                    formErrors.epfNumber ? 'border-red-500' : 'border-gray-300'
+                    formErrors.epfNumber ? "border-red-500" : "border-gray-300"
                   }`}
                 />
-                {formErrors.epfNumber && <p className="mt-1 text-sm text-red-500">{formErrors.epfNumber}</p>}
+                {formErrors.epfNumber && (
+                  <p className="mt-1 text-sm text-red-500">
+                    {formErrors.epfNumber}
+                  </p>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Gender
+                </label>
                 <select
-                  value={editedStaff.gender || 'Male'}
-                  onChange={(e) => handleInputChange('gender', e.target.value)}
+                  value={editedStaff.gender || "Male"}
+                  onChange={(e) => handleInputChange("gender", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="Male">Male</option>
@@ -193,14 +220,20 @@ const EditStaffModal = ({ staff, isOpen, onClose, onSave }) => {
                 </label>
                 <input
                   type="tel"
-                  value={editedStaff.contactNo || ''}
-                  onChange={(e) => handleInputChange('contactNo', e.target.value)}
+                  value={editedStaff.contactNo || ""}
+                  onChange={(e) =>
+                    handleInputChange("contactNo", e.target.value)
+                  }
                   placeholder="e.g., +94771234567"
                   className={`w-full px-3 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 ${
-                    formErrors.contactNo ? 'border-red-500' : 'border-gray-300'
+                    formErrors.contactNo ? "border-red-500" : "border-gray-300"
                   }`}
                 />
-                {formErrors.contactNo && <p className="mt-1 text-sm text-red-500">{formErrors.contactNo}</p>}
+                {formErrors.contactNo && (
+                  <p className="mt-1 text-sm text-red-500">
+                    {formErrors.contactNo}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -244,10 +277,14 @@ const EditStaffModal = ({ staff, isOpen, onClose, onSave }) => {
                   Designation <span className="text-red-500">*</span>
                 </label>
                 <select
-                  value={editedStaff.designation || ''}
-                  onChange={(e) => handleInputChange('designation', e.target.value)}
+                  value={editedStaff.designation || ""}
+                  onChange={(e) =>
+                    handleInputChange("designation", e.target.value)
+                  }
                   className={`w-full px-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 ${
-                    formErrors.designation ? 'border-red-500' : 'border-gray-300'
+                    formErrors.designation
+                      ? "border-red-500"
+                      : "border-gray-300"
                   }`}
                 >
                   <option value="">Select a designation</option>
@@ -257,26 +294,42 @@ const EditStaffModal = ({ staff, isOpen, onClose, onSave }) => {
                     </option>
                   ))}
                 </select>
-                {formErrors.designation && <p className="mt-1 text-sm text-red-500">{formErrors.designation}</p>}
+                {formErrors.designation && (
+                  <p className="mt-1 text-sm text-red-500">
+                    {formErrors.designation}
+                  </p>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Experience (Years)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Experience (Years)
+                </label>
                 <input
                   type="number"
                   min="0"
-                  value={editedStaff.experience || ''}
-                  onChange={(e) => handleInputChange('experience', e.target.value)}
+                  value={editedStaff.experience || ""}
+                  onChange={(e) =>
+                    handleInputChange("experience", e.target.value)
+                  }
                   className={`w-full px-3 py-2 border rounded-md focus:ring-green-500 focus:border-green-500 ${
-                    formErrors.experience ? 'border-red-500' : 'border-gray-300'
+                    formErrors.experience ? "border-red-500" : "border-gray-300"
                   }`}
                 />
-                {formErrors.experience && <p className="mt-1 text-sm text-red-500">{formErrors.experience}</p>}
+                {formErrors.experience && (
+                  <p className="mt-1 text-sm text-red-500">
+                    {formErrors.experience}
+                  </p>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Primary Specialization</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Primary Specialization
+                </label>
                 <select
-                  value={editedStaff.primarySpecialization || ''}
-                  onChange={(e) => handleInputChange('primarySpecialization', e.target.value)}
+                  value={editedStaff.primarySpecialization || ""}
+                  onChange={(e) =>
+                    handleInputChange("primarySpecialization", e.target.value)
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                 >
                   <option value="">Select specialization</option>
@@ -288,10 +341,14 @@ const EditStaffModal = ({ staff, isOpen, onClose, onSave }) => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Secondary Specialization</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Secondary Specialization
+                </label>
                 <select
-                  value={editedStaff.secondarySpecialization || ''}
-                  onChange={(e) => handleInputChange('secondarySpecialization', e.target.value)}
+                  value={editedStaff.secondarySpecialization || ""}
+                  onChange={(e) =>
+                    handleInputChange("secondarySpecialization", e.target.value)
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                 >
                   <option value="">Select specialization</option>
@@ -303,10 +360,12 @@ const EditStaffModal = ({ staff, isOpen, onClose, onSave }) => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Status
+                </label>
                 <select
-                  value={editedStaff.status || 'Active'}
-                  onChange={(e) => handleInputChange('status', e.target.value)}
+                  value={editedStaff.status || "Active"}
+                  onChange={(e) => handleInputChange("status", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                 >
                   <option value="Active">Active</option>
@@ -318,7 +377,8 @@ const EditStaffModal = ({ staff, isOpen, onClose, onSave }) => {
           </div>
 
           {/* License Information - Only for Doctors and Nurses */}
-          {(editedStaff.designation === 'Doctor' || editedStaff.designation === 'Nurse') && (
+          {(editedStaff.designation === "Doctor" ||
+            editedStaff.designation === "Nurse") && (
             <div className="mb-6 bg-purple-50 rounded-lg p-4 border border-purple-200">
               <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
                 <DocumentTextIcon className="w-5 h-5 mr-2 text-purple-600" />
@@ -327,26 +387,37 @@ const EditStaffModal = ({ staff, isOpen, onClose, onSave }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Medical License Number <span className="text-red-500">*</span>
+                    Medical License Number{" "}
+                    <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
-                    value={editedStaff.medicalLicenseNumber || ''}
-                    onChange={(e) => handleInputChange('medicalLicenseNumber', e.target.value)}
+                    value={editedStaff.medicalLicenseNumber || ""}
+                    onChange={(e) =>
+                      handleInputChange("medicalLicenseNumber", e.target.value)
+                    }
                     className={`w-full px-3 py-2 border rounded-md focus:ring-purple-500 focus:border-purple-500 ${
-                      formErrors.medicalLicenseNumber ? 'border-red-500' : 'border-gray-300'
+                      formErrors.medicalLicenseNumber
+                        ? "border-red-500"
+                        : "border-gray-300"
                     }`}
                   />
                   {formErrors.medicalLicenseNumber && (
-                    <p className="mt-1 text-sm text-red-500">{formErrors.medicalLicenseNumber}</p>
+                    <p className="mt-1 text-sm text-red-500">
+                      {formErrors.medicalLicenseNumber}
+                    </p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">License Expiry Date</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    License Expiry Date
+                  </label>
                   <input
                     type="date"
-                    value={editedStaff.licenseExpiryDate || ''}
-                    onChange={(e) => handleInputChange('licenseExpiryDate', e.target.value)}
+                    value={editedStaff.licenseExpiryDate || ""}
+                    onChange={(e) =>
+                      handleInputChange("licenseExpiryDate", e.target.value)
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
                   />
                 </div>
@@ -362,21 +433,29 @@ const EditStaffModal = ({ staff, isOpen, onClose, onSave }) => {
             </h3>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Qualifications {(editedStaff.designation === 'Doctor' || editedStaff.designation === 'Nurse') && (
+                Qualifications{" "}
+                {(editedStaff.designation === "Doctor" ||
+                  editedStaff.designation === "Nurse") && (
                   <span className="text-red-500">*</span>
                 )}
               </label>
               <textarea
                 rows={4}
-                value={editedStaff.qualifications || ''}
-                onChange={(e) => handleInputChange('qualifications', e.target.value)}
+                value={editedStaff.qualifications || ""}
+                onChange={(e) =>
+                  handleInputChange("qualifications", e.target.value)
+                }
                 placeholder="Enter qualifications, one per line or separated by commas (e.g., MBBS, MD, PhD)"
                 className={`w-full px-3 py-2 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 ${
-                  formErrors.qualifications ? 'border-red-500' : 'border-gray-300'
+                  formErrors.qualifications
+                    ? "border-red-500"
+                    : "border-gray-300"
                 }`}
               />
               {formErrors.qualifications && (
-                <p className="mt-1 text-sm text-red-500">{formErrors.qualifications}</p>
+                <p className="mt-1 text-sm text-red-500">
+                  {formErrors.qualifications}
+                </p>
               )}
             </div>
           </div>

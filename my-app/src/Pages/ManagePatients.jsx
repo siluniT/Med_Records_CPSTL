@@ -1,5 +1,7 @@
 // src/Pages/ManagePatients.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
+import axios from "axios";
 import {
   UserCircleIcon,
   MagnifyingGlassIcon,
@@ -12,32 +14,34 @@ import {
   ChevronRightIcon,
   ChartBarIcon,
   CalendarDaysIcon,
-} from '@heroicons/react/24/outline';
+} from "@heroicons/react/24/outline";
 
-import AppSidebar from '../Components/AppSidebar';
-import AppHeader from '../Components/AppHeader';
-import AppFooter from '../Components/AppFooter';
-import ViewPatientModal from '../Components/ViewPatientModal';
-import EditPatientModal from '../Components/EditPatientModal';
-import PatientComparisonModal from '../Components/PatientComparisonModal';
+import AppSidebar from "../Components/AppSidebar";
+import AppHeader from "../Components/AppHeader";
+import AppFooter from "../Components/AppFooter";
+import ViewPatientModal from "../Components/ViewPatientModal";
+import EditPatientModal from "../Components/EditPatientModal";
+import PatientComparisonModal from "../Components/PatientComparisonModal";
 
 // Status Badge Component
 const StatusBadge = ({ status }) => {
   const getStatusStyles = () => {
     switch (status) {
-      case 'Active':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'Inactivate':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'In treatment':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case "Active":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "Inactivate":
+        return "bg-red-100 text-red-800 border-red-200";
+      case "In treatment":
+        return "bg-blue-100 text-blue-800 border-blue-200";
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
   return (
-    <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getStatusStyles()}`}>
+    <span
+      className={`px-3 py-1 text-xs font-medium rounded-full border ${getStatusStyles()}`}
+    >
       {status}
     </span>
   );
@@ -46,9 +50,9 @@ const StatusBadge = ({ status }) => {
 function ManagePatients() {
   const [patients, setPatients] = useState([]);
   const [filteredPatients, setFilteredPatients] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [activeTab] = useState('list'); // 'list' or 'comparison'
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [activeTab] = useState("list"); // 'list' or 'comparison'
 
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -58,36 +62,63 @@ function ManagePatients() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const patientsPerPage = 10;
+  const location = useLocation();
+  const [popup, setPopup] = useState(null);
 
+  useEffect(() => {
+    if (location.state?.message) {
+      setPopup({
+        message: location.state.message,
+        type: location.state.type || "info",
+      });
+      //Auto-hide popup after 3 seconds
+      const timer = setTimeout(() => setPopup(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [location.state]);
+
+  // Determine patient status
   const determinePatientStatus = (patient) => {
     if (patient.currentProblems && patient.currentProblems.length > 50) {
-      return 'Inactivate';
+      return "Inactivate";
     } else if (patient.treatmentPlan && patient.treatmentPlan.length > 0) {
-      return 'In treatment';
+      return "In treatment";
     }
-    return 'Active';
+    return "Active";
   };
 
   // Load patients from localStorage
   useEffect(() => {
-    const storedPatients = JSON.parse(localStorage.getItem('patients') || '[]');
-    const patientsWithStatus = storedPatients.map((patient) => {
-      const status = patient.manualStatus || determinePatientStatus(patient);
-      return { ...patient, status };
-    });
-    setPatients(patientsWithStatus);
-    setFilteredPatients(patientsWithStatus);
+    const fetchPatients = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/patients");
+        const patientsWithStatus = res.data.map((patient) => {
+          const status =
+            patient.manualStatus || determinePatientStatus(patient);
+          return { ...patient, status };
+        });
+        setPatients(patientsWithStatus);
+        setFilteredPatients(patientsWithStatus);
+      } catch (err) {
+        console.error("Error fetching patients:", err);
+      }
+    };
+
+    fetchPatients();
   }, []);
 
   // Calculate age
   const calculateAge = (dob) => {
-    if (!dob) return '—';
+    if (!dob) return "—";
     const birthDate = new Date(dob);
-    if (isNaN(birthDate.getTime())) return '—';
+    if (isNaN(birthDate.getTime())) return "—";
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
       age--;
     }
     return age;
@@ -98,15 +129,22 @@ function ManagePatients() {
     let filtered = patients;
 
     if (searchTerm) {
-      filtered = filtered.filter((patient) =>
-        (patient.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (patient.registrationNo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (patient.epfNo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (patient.contactNo || '').includes(searchTerm)
+      filtered = filtered.filter(
+        (patient) =>
+          (patient.name || "")
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          (patient.registrationNo || "")
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          (patient.epfNo || "")
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          (patient.contactNo || "").includes(searchTerm)
       );
     }
 
-    if (filterStatus !== 'all') {
+    if (filterStatus !== "all") {
       filtered = filtered.filter((patient) => patient.status === filterStatus);
     }
 
@@ -117,18 +155,101 @@ function ManagePatients() {
   // Pagination
   const indexOfLastPatient = currentPage * patientsPerPage;
   const indexOfFirstPatient = indexOfLastPatient - patientsPerPage;
-  const currentPatients = filteredPatients.slice(indexOfFirstPatient, indexOfLastPatient);
+  const currentPatients = filteredPatients.slice(
+    indexOfFirstPatient,
+    indexOfLastPatient
+  );
   const totalPages = Math.ceil(filteredPatients.length / patientsPerPage);
 
   // Actions
-  const handleView = (patient) => {
-    setSelectedPatient(patient);
-    setIsViewModalOpen(true);
+  const handleView = async (patient) => {
+    const patientId = patient.patient_id ?? patient.id;
+    console.log("Fetching patientId:", patientId);
+
+    try {
+      // Fetch both patient info and latest medical record in parallel
+      const [patientResp, recordResp] = await Promise.allSettled([
+        axios.get(`http://localhost:5000/patients/${patientId}`),
+        axios.get(
+          `http://localhost:5000/patientmedicalrecords/${patientId}/latest`
+        ),
+      ]);
+
+      // Extract basic patient info
+      let patientData = null;
+      if (patientResp.status === "fulfilled") {
+        const p = patientResp.value.data;
+        patientData = p.patient ?? p.data ?? p; // handle different response shapes
+      } else {
+        console.error(
+          "Failed to fetch patient basic info:",
+          patientResp.reason
+        );
+      }
+
+      // Extract latest medical record
+      let latestRecord = null;
+      if (recordResp.status === "fulfilled") {
+        const r = recordResp.value.data;
+        if (r && r.success && r.latestRecord) latestRecord = r.latestRecord;
+        else if (r && r.latestRecord) latestRecord = r.latestRecord;
+        else if (r && (r.record || r.data)) latestRecord = r.record ?? r.data;
+      } else {
+        console.warn(
+          "No medical record or failed to fetch:",
+          recordResp.reason
+        );
+      }
+
+      //Fallback if patient info could not be fetched
+      if (!patientData) {
+        console.warn(
+          "Using fallback patient object passed from parent component."
+        );
+        setSelectedPatient(patient);
+        setIsViewModalOpen(true);
+        return;
+      }
+
+      //Merge patient info + latest medical record
+      const fullPatient = { ...patientData, ...(latestRecord || {}) };
+
+      //open the modal and show full details
+      setSelectedPatient(fullPatient);
+      setIsViewModalOpen(true);
+    } catch (err) {
+      console.error("Unexpected error in handleView:", err);
+
+      setSelectedPatient(patient);
+      setIsViewModalOpen(true);
+    }
   };
 
-  const handleEdit = (patient) => {
-    setSelectedPatient(patient);
-    setIsEditModalOpen(true);
+  const handleEdit = async (patient) => {
+    // Use patient_id if available, otherwise fall back to id
+    const patientId = patient.patient_id ?? patient.id;
+    console.log("Editing patient with ID:", patientId);
+
+    try {
+      const res = await axios.get(
+        `http://localhost:5000/patientmedicalrecords/${patientId}/latest`
+      );
+
+      if (res.data.success) {
+        const fullPatient = {
+          ...patient,
+          ...(res.data.latestRecord || {}),
+        };
+
+        setSelectedPatient(fullPatient);
+        setIsEditModalOpen(true);
+      } else {
+        alert("No medical records found for this patient");
+      }
+    } catch (err) {
+      console.error("Error fetching patient details:", err);
+      alert("Failed to load patient details");
+    }
   };
 
   const handleCompareMetrics = (patient) => {
@@ -136,39 +257,77 @@ function ManagePatients() {
     setIsComparisonModalOpen(true);
   };
 
-  const handleSaveEdit = (editedPatient) => {
-    const status = editedPatient.manualStatus || determinePatientStatus(editedPatient);
-    const updatedPatients = patients.map((p) =>
-      p.id === editedPatient.id ? { ...editedPatient, status, lastUpdated: new Date().toISOString() } : p
-    );
+  const handleSavePatient = async (editedPatient) => {
+    try {
+      const formattedPatient = {
+        ...editedPatient,
+        dateOfBirth: editedPatient.dateOfBirth
+          ? new Date(editedPatient.dateOfBirth).toISOString().split("T")[0]
+          : null,
+        patientHistory:
+          Array.isArray(editedPatient.patientHistory) &&
+          editedPatient.patientHistory.length > 0
+            ? editedPatient.patientHistory
+            : null,
+        familyHistoryFather:
+          Array.isArray(editedPatient.familyHistoryFather) &&
+          editedPatient.familyHistoryFather.length > 0
+            ? editedPatient.familyHistoryFather
+            : null,
+        familyHistoryMother:
+          Array.isArray(editedPatient.familyHistoryMother) &&
+          editedPatient.familyHistoryMother.length > 0
+            ? editedPatient.familyHistoryMother
+            : null,
+        familyHistorySiblings:
+          Array.isArray(editedPatient.familyHistorySiblings) &&
+          editedPatient.familyHistorySiblings.length > 0
+            ? editedPatient.familyHistorySiblings
+            : null,
+      };
 
-    setPatients(updatedPatients);
-    localStorage.setItem('patients', JSON.stringify(updatedPatients));
-    setSelectedPatient({ ...editedPatient, status });
-    alert('Patient information updated successfully!');
+      return formattedPatient;
+    } catch (err) {
+      console.error("Error preparing patient data:", err);
+    }
   };
 
-  const handleDelete = (patientId) => {
-    if (window.confirm('Are you sure you want to delete this patient record?')) {
-      const updatedPatients = patients.filter((p) => p.id !== patientId);
-      setPatients(updatedPatients);
-      localStorage.setItem('patients', JSON.stringify(updatedPatients));
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this patient?"))
+      return;
+
+    try {
+      const res = await axios.delete(
+        `http://localhost:5000/patients/delete/${id}`
+      );
+      console.log(res.data.message);
+
+      setPatients((prev) => prev.filter((patient) => patient.id !== id));
+
+      alert("Patient deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting patient:", error);
+      alert("Failed to delete patient. Please try again.");
     }
   };
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
   const closeSidebar = () => setIsSidebarOpen(false);
 
+  // Row-by-row status toggle
   const handleToggleRowStatus = (patientId) => {
     const updated = patients.map((p) => {
       if (p.id !== patientId) return p;
 
       const current = p.manualStatus || determinePatientStatus(p);
       let nextStatus;
-      if (current === 'Inactivate') {
-        nextStatus = p.treatmentPlan && p.treatmentPlan.length > 0 ? 'In treatment' : 'Active';
+      if (current === "Inactivate") {
+        nextStatus =
+          p.treatmentPlan && p.treatmentPlan.length > 0
+            ? "In treatment"
+            : "Active";
       } else {
-        nextStatus = 'Inactivate';
+        nextStatus = "Inactivate";
       }
       return {
         ...p,
@@ -179,9 +338,10 @@ function ManagePatients() {
     });
 
     setPatients(updated);
-    localStorage.setItem('patients', JSON.stringify(updated));
+    localStorage.setItem("patients", JSON.stringify(updated));
   };
 
+  // Small toggle UI
   const RowToggle = ({ on, onClick, title }) => (
     <button
       type="button"
@@ -190,27 +350,36 @@ function ManagePatients() {
       onClick={onClick}
       title={title}
       className={`relative inline-flex h-5 w-10 items-center rounded-full border transition-colors ${
-        on ? 'bg-green-500 border-green-600' : 'bg-red-500 border-red-600'
+        on ? "bg-green-500 border-green-600" : "bg-red-500 border-red-600"
       }`}
     >
       <span
         className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-          on ? 'translate-x-5' : 'translate-x-1'
+          on ? "translate-x-5" : "translate-x-1"
         }`}
       />
     </button>
   );
 
+  // Get patients with health metrics for comparison
   const getPatientsWithMetrics = () => {
-    return patients.filter(patient => 
-      patient.height || patient.weight || patient.bmi || patient.waist ||
-      patient.bp || patient.rbs || patient.fbs || patient.visionLeft || patient.visionRight
+    return patients.filter(
+      (patient) =>
+        patient.height ||
+        patient.weight ||
+        patient.bmi ||
+        patient.waist ||
+        patient.bp ||
+        patient.rbs ||
+        patient.fbs ||
+        patient.visionLeft ||
+        patient.visionRight
     );
   };
 
   const renderListView = () => (
     <>
-  
+      {/* Search & Filter */}
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="flex-1">
           <div className="relative">
@@ -245,86 +414,133 @@ function ManagePatients() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reg. No</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Info</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age/Gender</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Reg. No
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Patient Info
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Contact
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Age/Gender
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Last Updated
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
+
             <tbody className="bg-white divide-y divide-gray-200">
-              {currentPatients.map((patient) => {
-                const isOn = patient.status !== 'Inactivate';
-                return (
-                  <tr key={patient.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {patient.registrationNo}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{patient.name}</div>
-                        <div className="text-sm text-gray-500">EPF: {patient.epfNo}</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <PhoneIcon className="w-4 h-4 mr-1 text-gray-400" />
-                        {patient.contactNo}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {patient.dateOfBirth ? `${calculateAge(patient.dateOfBirth)} yrs` : '—'} / {patient.gender || '—'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
-                        <StatusBadge status={patient.status} />
-                        <RowToggle
-                          on={isOn}
-                          onClick={() => handleToggleRowStatus(patient.id)}
-                          title={isOn ? 'Toggle OFF (Inactivate)' : 'Toggle ON (Active/In treatment)'}
-                        />
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(patient.lastUpdated || Date.now()).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <div className="flex items-center justify-center space-x-2">
-                        <button
-                          onClick={() => handleView(patient)}
-                          className="p-1 text-blue-600 hover:bg-blue-100 rounded transition-colors"
-                          title="View Details"
-                        >
-                          <EyeIcon className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleEdit(patient)}
-                          className="p-1 text-yellow-600 hover:bg-yellow-100 rounded transition-colors"
-                          title="Edit"
-                        >
-                          <PencilIcon className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleCompareMetrics(patient)}
-                          className="p-1 text-purple-600 hover:bg-purple-100 rounded transition-colors"
-                          title="Compare Health Metrics"
-                        >
-                          <ChartBarIcon className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(patient.id)}
-                          className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
-                          title="Delete"
-                        >
-                          <TrashIcon className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+              {currentPatients
+                .slice()
+                .sort((a, b) => a.id - b.id) //  ascending by ID
+                .map((patient) => {
+                  const isOn = patient.status !== "Inactivate";
+                  return (
+                    <tr
+                      key={patient.id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      {/* Registration No */}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {patient.registrationNo}
+                      </td>
+
+                      {/* Patient Info */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {patient.name}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            EPF: {patient.epfNo}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Contact */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center text-sm text-gray-900">
+                          <PhoneIcon className="w-4 h-4 mr-1 text-gray-400" />
+                          {patient.contactNo}
+                        </div>
+                      </td>
+
+                      {/* Age & Gender */}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {patient.dateOfBirth
+                          ? `${calculateAge(patient.dateOfBirth)} yrs`
+                          : "—"}{" "}
+                        / {patient.gender || "—"}
+                      </td>
+
+                      {/* Status + Toggle */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          <StatusBadge status={patient.status} />
+                          <RowToggle
+                            on={isOn}
+                            onClick={() => handleToggleRowStatus(patient.id)}
+                            title={
+                              isOn
+                                ? "Toggle OFF (Inactivate)"
+                                : "Toggle ON (Active/In treatment)"
+                            }
+                          />
+                        </div>
+                      </td>
+
+                      {/* Last Updated */}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(
+                          patient.lastUpdated || Date.now()
+                        ).toLocaleDateString()}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <div className="flex items-center justify-center space-x-2">
+                          <button
+                            onClick={() => handleView(patient)}
+                            className="p-1 text-blue-600 hover:bg-blue-100 rounded transition-colors"
+                            title="View Details"
+                          >
+                            <EyeIcon className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => handleEdit(patient)}
+                            className="p-1 text-yellow-600 hover:bg-yellow-100 rounded transition-colors"
+                            title="Edit"
+                          >
+                            <PencilIcon className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => handleCompareMetrics(patient)}
+                            className="p-1 text-purple-600 hover:bg-purple-100 rounded transition-colors"
+                            title="Compare Health Metrics"
+                          >
+                            <ChartBarIcon className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(patient.id)}
+                            className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
+                            title="Delete"
+                          >
+                            <TrashIcon className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
         ) : (
@@ -332,9 +548,9 @@ function ManagePatients() {
             <UserCircleIcon className="mx-auto h-12 w-12 text-gray-400" />
             <p className="mt-2 text-sm text-gray-600">No patients found</p>
             <p className="mt-1 text-xs text-gray-500">
-              {searchTerm || filterStatus !== 'all'
-                ? 'Try adjusting your search or filter criteria'
-                : 'Add a new patient to get started'}
+              {searchTerm || filterStatus !== "all"
+                ? "Try adjusting your search or filter criteria"
+                : "Add a new patient to get started"}
             </p>
           </div>
         )}
@@ -345,7 +561,9 @@ function ManagePatients() {
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-700">
-              Showing {indexOfFirstPatient + 1} to {Math.min(indexOfLastPatient, filteredPatients.length)} of {filteredPatients.length} patients
+              Showing {indexOfFirstPatient + 1} to{" "}
+              {Math.min(indexOfLastPatient, filteredPatients.length)} of{" "}
+              {filteredPatients.length} patients
             </div>
             <div className="flex items-center space-x-2">
               <button
@@ -353,8 +571,8 @@ function ManagePatients() {
                 disabled={currentPage === 1}
                 className={`p-2 rounded ${
                   currentPage === 1
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
                 }`}
               >
                 <ChevronLeftIcon className="w-5 h-5" />
@@ -362,19 +580,28 @@ function ManagePatients() {
 
               {[...Array(totalPages)].map((_, index) => {
                 const page = index + 1;
-                if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
+                if (
+                  page === 1 ||
+                  page === totalPages ||
+                  (page >= currentPage - 1 && page <= currentPage + 1)
+                ) {
                   return (
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
                       className={`px-3 py-1 rounded ${
-                        currentPage === page ? 'bg-red-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                        currentPage === page
+                          ? "bg-red-500 text-white"
+                          : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
                       }`}
                     >
                       {page}
                     </button>
                   );
-                } else if (page === currentPage - 2 || page === currentPage + 2) {
+                } else if (
+                  page === currentPage - 2 ||
+                  page === currentPage + 2
+                ) {
                   return (
                     <span key={page} className="px-1">
                       ...
@@ -385,12 +612,14 @@ function ManagePatients() {
               })}
 
               <button
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
                 disabled={currentPage === totalPages}
                 className={`p-2 rounded ${
                   currentPage === totalPages
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
                 }`}
               >
                 <ChevronRightIcon className="w-5 h-5" />
@@ -413,8 +642,12 @@ function ManagePatients() {
             <div className="flex items-center">
               <ChartBarIcon className="w-8 h-8 text-blue-600 mr-3" />
               <div>
-                <p className="text-2xl font-bold text-blue-600">{patientsWithMetrics.length}</p>
-                <p className="text-sm text-gray-600">Patients with Health Data</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {patientsWithMetrics.length}
+                </p>
+                <p className="text-sm text-gray-600">
+                  Patients with Health Data
+                </p>
               </div>
             </div>
           </div>
@@ -423,7 +656,10 @@ function ManagePatients() {
               <CalendarDaysIcon className="w-8 h-8 text-green-600 mr-3" />
               <div>
                 <p className="text-2xl font-bold text-green-600">
-                  {patientsWithMetrics.filter(p => p.monthlyData?.length > 0).length}
+                  {
+                    patientsWithMetrics.filter((p) => p.monthlyData?.length > 0)
+                      .length
+                  }
                 </p>
                 <p className="text-sm text-gray-600">With Monthly Tracking</p>
               </div>
@@ -434,7 +670,10 @@ function ManagePatients() {
               <CalendarDaysIcon className="w-8 h-8 text-purple-600 mr-3" />
               <div>
                 <p className="text-2xl font-bold text-purple-600">
-                  {patientsWithMetrics.filter(p => p.yearlyData?.length > 0).length}
+                  {
+                    patientsWithMetrics.filter((p) => p.yearlyData?.length > 0)
+                      .length
+                  }
                 </p>
                 <p className="text-sm text-gray-600">With Yearly Tracking</p>
               </div>
@@ -442,18 +681,27 @@ function ManagePatients() {
           </div>
         </div>
 
+        {/* Patient Comparison Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {patientsWithMetrics.map((patient) => (
-            <div key={patient.id} className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <div
+              key={patient.id}
+              className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+            >
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h4 className="text-lg font-semibold text-gray-900">{patient.name}</h4>
-                    <p className="text-sm text-gray-500">Reg: {patient.registrationNo}</p>
+                    <h4 className="text-lg font-semibold text-gray-900">
+                      {patient.name}
+                    </h4>
+                    <p className="text-sm text-gray-500">
+                      Reg: {patient.registrationNo}
+                    </p>
                   </div>
                   <StatusBadge status={patient.status} />
                 </div>
 
+                {/* Quick Health Metrics */}
                 <div className="space-y-2 mb-4">
                   {patient.height && (
                     <div className="flex justify-between text-sm">
@@ -496,7 +744,9 @@ function ManagePatients() {
         {patientsWithMetrics.length === 0 && (
           <div className="text-center py-12">
             <ChartBarIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <p className="mt-2 text-sm text-gray-600">No patients with health metrics found</p>
+            <p className="mt-2 text-sm text-gray-600">
+              No patients with health metrics found
+            </p>
             <p className="mt-1 text-xs text-gray-500">
               Health metrics will appear here once patients have recorded data
             </p>
@@ -508,7 +758,11 @@ function ManagePatients() {
 
   return (
     <div className="flex h-screen bg-gray-100 font-sans">
-      <AppSidebar isSidebarOpen={isSidebarOpen} onCloseSidebar={closeSidebar} currentPage="Manage Patients" />
+      <AppSidebar
+        isSidebarOpen={isSidebarOpen}
+        onCloseSidebar={closeSidebar}
+        currentPage="Manage Patients"
+      />
 
       <main className="flex-1 flex flex-col overflow-hidden">
         <AppHeader onMenuToggle={toggleSidebar} isSidebarOpen={isSidebarOpen} />
@@ -524,18 +778,33 @@ function ManagePatients() {
                 </h1>
                 <div className="mt-4 md:mt-0 flex items-center space-x-2">
                   <span className="text-sm text-gray-600">Total Patients:</span>
-                  <span className="text-lg font-semibold text-red-600">{patients.length}</span>
+                  <span className="text-lg font-semibold text-red-600">
+                    {patients.length}
+                  </span>
                 </div>
               </div>
 
-              <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-4">
-                
-                
-              </div>
+              {/* Tab Navigation */}
+              <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-4"></div>
 
-              {activeTab === 'list' ? renderListView() : renderComparisonView()}
+              {/* Tab Content */}
+              {activeTab === "list" ? renderListView() : renderComparisonView()}
             </div>
           </div>
+          {/*Popup*/}
+          {popup && (
+            <div
+              className={`fixed top-4 right-4 px-4 py-2 rounded shadow-lg z-50 ${
+                popup.type === "success"
+                  ? "bg-green-500 text-white"
+                  : popup.type === "error"
+                  ? "bg-red-500 text-white"
+                  : "bg-gray-500 text-white"
+              }`}
+            >
+              {popup.message}
+            </div>
+          )}
         </div>
 
         <AppFooter />
@@ -552,11 +821,12 @@ function ManagePatients() {
         }}
       />
 
+      {/* Edit Modal */}
       <EditPatientModal
         patient={selectedPatient}
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
-        onSave={handleSaveEdit}
+        onSave={handleSavePatient}
       />
 
       <PatientComparisonModal

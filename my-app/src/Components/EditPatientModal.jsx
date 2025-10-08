@@ -1,139 +1,295 @@
-// src/Components/EditPatientModal.jsx
-import React, { useEffect, useState } from 'react';
-import { 
-  UserCircleIcon, 
-  XMarkIcon, 
-  DocumentTextIcon, 
-  ExclamationTriangleIcon,
-  SunIcon,
-  ClipboardDocumentListIcon,
-  EyeIcon
-} from '@heroicons/react/24/outline';
-import { CheckCircleIcon, HeartIcon, BeakerIcon } from '@heroicons/react/24/solid';
-import { CheckIcon } from '@heroicons/react/24/outline';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import {
+  UserCircleIcon,
+  XMarkIcon,
+  HeartIcon,
+  CheckIcon,
+} from "@heroicons/react/24/outline";
+import PatientComparisonModal from "./PatientComparisonModal";
+
+const commonMedicalConditions = ["DM", "HTN", "CHOL", "IHD", "CA"];
+const familyKeyMap = {
+  Father: "familyHistoryFather",
+  Mother: "familyHistoryMother",
+  Siblings: "familyHistorySibling",
+};
+const familyRelations = ["Father", "Mother", "Siblings"];
 
 const EditPatientModal = ({ patient, isOpen, onClose, onSave }) => {
   const [editedPatient, setEditedPatient] = useState({});
 
-  // Common medical conditions for the medical history table
-  const commonMedicalConditions = [
-    'Diabetes', 'Hypertension', 'Heart Disease', 'Cancer', 'Stroke'
-  ];
-
+  // Initialize patient info
   useEffect(() => {
     if (patient) {
       setEditedPatient({
-        ...patient,
-        
-        patientHistory: Array.isArray(patient.patientHistory) ? patient.patientHistory : [],
-        familyHistoryFather: Array.isArray(patient.familyHistoryFather) ? patient.familyHistoryFather : [],
-        familyHistoryMother: Array.isArray(patient.familyHistoryMother) ? patient.familyHistoryMother : [],
-        familyHistorySiblings: Array.isArray(patient.familyHistorySiblings) ? patient.familyHistorySiblings : [],
+        registrationNo: patient.registrationNo || "",
+        name: patient.name || "",
+        epfNo: patient.epfNo || "",
+        contactNo: patient.contactNo || "",
+        gender: patient.gender || "",
+        dateOfBirth: patient.dateOfBirth || "",
+        age: patient.age || "",
+        height: patient.height || "",
+        weight: patient.weight || "",
+        bmi: patient.bmi || "",
+        waist: patient.waist || "",
+        bp: patient.bp || "",
+        rbs: patient.rbs || "",
+        fbs: patient.fbs || "",
+        visionLeft: patient.visionLeft || "",
+        visionRight: patient.visionRight || "",
+        breastExamination: patient.breastExamination || "",
+        papSmear: patient.papSmear || "",
+        alcoholConsumption: patient.alcoholConsumption || "",
+        smokingingHabits: patient.smokingingHabits || "",
+        treatmentPlan: patient.treatmentPlan || "",
+        smokingCessationAdvice: patient.smokingCessationAdvice || "",
+        alcoholAbuseAdvice: patient.alcoholAbuseAdvice || "",
+
+        // Always normalize to arrays
+        patientHistory: Array.isArray(patient.patientHistory)
+          ? patient.patientHistory
+          : patient.patientHistory
+          ? [patient.patientHistory]
+          : [],
+
+        patientHistoryOther: patient.otherPatientConditions || "",
+
+        familyHistoryFather: Array.isArray(patient.familyHistoryFather)
+          ? patient.familyHistoryFather
+          : patient.familyHistoryFather
+          ? [patient.familyHistoryFather]
+          : [],
+
+        familyHistoryFatherOther: patient.otherFatherConditions || "",
+
+        familyHistoryMother: Array.isArray(patient.familyHistoryMother)
+          ? patient.familyHistoryMother
+          : patient.familyHistoryMother
+          ? [patient.familyHistoryMother]
+          : [],
+
+        familyHistoryMotherOther: patient.otherMotherConditions || "",
+
+        familyHistorySibling: Array.isArray(patient.familyHistorySibling)
+          ? patient.familyHistorySibling
+          : patient.familyHistorySibling
+          ? [patient.familyHistorySibling]
+          : [],
+
+        familyHistorySiblingOther: patient.otherSiblingsConditions || "",
       });
     }
   }, [patient]);
 
-  if (!isOpen || !patient) return null;
+  const [latestRecord, setLatestRecord] = useState({});
+
+  // Fetch latest medical record
+  useEffect(() => {
+    if (isOpen && (patient?.patient_id || patient?.id)) {
+      const patientId = patient.patient_id ?? patient.id;
+      console.log("Fetching patientId in modal:", patientId);
+
+      axios
+        .get(`http://localhost:5000/patientmedicalrecords/${patientId}/latest`)
+        .then((res) => {
+          const recordData = res.data?.latestRecord || {};
+          setLatestRecord(recordData);
+
+          setEditedPatient((prev) => ({
+            ...prev,
+            ...recordData,
+            patientHistory: Array.isArray(recordData.patientHistory)
+              ? recordData.patientHistory
+              : recordData.patientHistory
+              ? [recordData.patientHistory]
+              : [],
+
+            patientHistoryOther: recordData.otherPatientConditions || "",
+
+            familyHistoryFather: Array.isArray(recordData.familyHistoryFather)
+              ? recordData.familyHistoryFather
+              : recordData.familyHistoryFather
+              ? [recordData.familyHistoryFather]
+              : [],
+
+            familyHistoryFatherOther: recordData.otherFatherConditions || "",
+
+            familyHistoryMother: Array.isArray(recordData.familyHistoryMother)
+              ? recordData.familyHistoryMother
+              : recordData.familyHistoryMother
+              ? [recordData.familyHistoryMother]
+              : [],
+
+            familyHistoryMotherOther: recordData.otherMotherConditions || "",
+
+            familyHistorySibling: Array.isArray(
+              recordData.familyHistorySiblings
+            )
+              ? recordData.familyHistorySiblings
+              : recordData.familyHistorySiblings
+              ? [recordData.familyHistorySiblings]
+              : [],
+
+            familyHistorySiblingOther: recordData.otherSiblingsConditions || "",
+          }));
+        })
+        .catch((err) => {
+          console.error(err);
+          // Default empty values
+          setEditedPatient((prev) => ({
+            ...prev,
+            patientHistory: "",
+            familyHistoryFather: "",
+            familyHistoryMother: "",
+            familyHistorySibling: "",
+          }));
+        });
+    }
+  }, [isOpen, patient]);
+
+  useEffect(() => {
+    console.log("Edited Patient:", editedPatient);
+    console.log("Patient History:", editedPatient.patientHistory);
+    console.log("Father History:", editedPatient.familyHistoryFather);
+    console.log("Mother History:", editedPatient.familyHistoryMother);
+    console.log("Sibling History:", editedPatient.familyHistorySibling);
+  }, [editedPatient]);
+
+  if (!isOpen) return null;
 
   const handleInputChange = (field, value) => {
-    setEditedPatient((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setEditedPatient((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Handle medical history checkboxes
-  const handleMedicalHistoryChange = (relation, condition) => {
-    const fieldName = relation === 'Patient' ? 'patientHistory' : `familyHistory${relation}`;
-    const currentConditions = editedPatient[fieldName] || [];
-    
-    let updatedConditions;
-    if (currentConditions.includes(condition)) {
-      updatedConditions = currentConditions.filter(c => c !== condition);
-    } else {
-      updatedConditions = [...currentConditions, condition];
+  // Checkbox Handler
+  const handleCheckboxChange = (field, condition) => {
+    setEditedPatient((prev) => {
+      const current = Array.isArray(prev[field]) ? prev[field] : [];
+      const exists = current.includes(condition);
+      return {
+        ...prev,
+        [field]: exists
+          ? current.filter((c) => c !== condition)
+          : [...current, condition],
+      };
+    });
+  };
+
+  // Save medical record and pass editedPatient to parent
+
+  const handleSave = async () => {
+    try {
+      const patientId = patient?.patient_id || patient?.id;
+      if (!patientId) {
+        alert("Patient not found.");
+        return;
+      }
+
+      // Merge old + new
+      const mergedRecord = {
+        age: editedPatient.age || null,
+        height: editedPatient.height || null,
+        weight: editedPatient.weight || null,
+        bmi: editedPatient.bmi || null,
+        waist: editedPatient.waist || null,
+        rbs: editedPatient.rbs || null,
+        fbs: editedPatient.fbs || null,
+        bp: editedPatient.bp || null,
+        visionLeft: editedPatient.visionLeft || null,
+        visionRight: editedPatient.visionRight || null,
+        breastExamination: editedPatient.breastExamination || "",
+        papSmear: editedPatient.papSmear || "",
+        alcoholConsumption: editedPatient.alcoholConsumption || "",
+        smokingHabits: editedPatient.smokingingHabits || "",
+        treatmentPlan: editedPatient.treatmentPlan || "",
+        smokingCessationAdvice: editedPatient.smokingCessationAdvice || "",
+        alcoholAbuseAdvice: editedPatient.alcoholAbuseAdvice || "",
+        patientHistory: editedPatient.patientHistory || [],
+        familyHistoryFather: editedPatient.familyHistoryFather || [],
+        familyHistoryMother: editedPatient.familyHistoryMother || [],
+        familyHistorySiblings: editedPatient.familyHistorySibling || [],
+        otherPatientConditions: editedPatient.patientHistoryOther || "",
+        otherFatherConditions: editedPatient.familyHistoryFatherOther || "",
+        otherMotherConditions: editedPatient.familyHistoryMotherOther || "",
+        otherSiblingsConditions: editedPatient.familyHistorySiblingOther || "",
+        currentProblems: editedPatient.currentProblems || "",
+        visitDate: new Date().toISOString().slice(0, 19).replace("T", " "),
+      };
+
+      const res = await axios.post(
+        `http://localhost:5000/patientmedicalrecords/${patientId}/records`,
+        mergedRecord
+      );
+
+      if (res.status === 200 || res.status === 201) {
+        alert("New medical record appended successfully!");
+        onSave && onSave({ ...patient, lastRecord: mergedRecord });
+        onClose();
+      } else {
+        alert("Failed to append medical record.");
+      }
+    } catch (err) {
+      console.error(
+        "Error appending medical record:",
+        err.response?.data || err.message
+      );
+      alert("Error appending medical record");
     }
-    
-    handleInputChange(fieldName, updatedConditions);
-  };
-
-  const handleSave = () => {
-    onSave(editedPatient);
-    onClose();
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-red-500 to-red-500 text-white p-6">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center">
-              <svg className="w-8 h-8 mr-3" viewBox="0 0 24 24" fill="none">
-                <path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-              <div>
-                <h2 className="text-2xl font-bold">Edit Patient Details</h2>
-                <p className="text-red-100 text-sm">Editing: {patient.name}</p>
-              </div>
+        <div className="bg-gradient-to-r from-red-500 to-red-500 text-white p-6 flex justify-between items-center">
+          <div className="flex items-center">
+            <UserCircleIcon className="w-8 h-8 mr-3" />
+            <div>
+              <h2 className="text-2xl font-bold">Edit Patient Details</h2>
+              <p className="text-red-100 text-sm">
+                Editing: {patient?.name || "N/A"}
+              </p>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-red-600 rounded-full transition-colors">
-              <XMarkIcon className="w-6 h-6" />
-            </button>
           </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-red-600 rounded-full transition-colors"
+          >
+            <XMarkIcon className="w-6 h-6" />
+          </button>
         </div>
 
         {/* Body */}
-        <div className="overflow-y-auto max-h-[calc(90vh-180px)] p-6">
+        <div className="overflow-y-auto max-h-[calc(90vh-180px)] p-6 space-y-6">
           {/* Demographics */}
-          <div className="mb-6 bg-blue-50 rounded-lg p-4 border border-blue-200">
-            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-              <UserCircleIcon className="w-5 h-5 mr-2 text-blue-600" />
+          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+            <h3 className="text-lg font-bold mb-4 flex items-center">
               Edit Demographics
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {["registrationNo", "name", "epfNo", "contactNo"].map((field) => (
+                <div key={field}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {field.replace(/([A-Z])/g, " $1").toUpperCase()}
+                  </label>
+                  <input
+                    type="text"
+                    value={editedPatient[field] || ""}
+                    onChange={(e) => handleInputChange(field, e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+              ))}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Registration No.</label>
-                <input
-                  type="text"
-                  value={editedPatient.registrationNo || ''}
-                  onChange={(e) => handleInputChange('registrationNo', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                <input
-                  type="text"
-                  value={editedPatient.name || ''}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">EPF No.</label>
-                <input
-                  type="text"
-                  value={editedPatient.epfNo || ''}
-                  onChange={(e) => handleInputChange('epfNo', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Contact No.</label>
-                <input
-                  type="text"
-                  value={editedPatient.contactNo || ''}
-                  onChange={(e) => handleInputChange('contactNo', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Gender
+                </label>
                 <select
-                  value={editedPatient.gender || ''}
-                  onChange={(e) => handleInputChange('gender', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  value={editedPatient.gender || ""}
+                  onChange={(e) => handleInputChange("gender", e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 >
                   <option value="">Select Gender</option>
                   <option value="Male">Male</option>
@@ -141,271 +297,95 @@ const EditPatientModal = ({ patient, isOpen, onClose, onSave }) => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Date of Birth
+                </label>
                 <input
                   type="date"
-                  value={editedPatient.dateOfBirth || ''}
-                  onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  value={
+                    editedPatient.dateOfBirth
+                      ? editedPatient.dateOfBirth.split("T")[0]
+                      : ""
+                  }
+                  onChange={(e) =>
+                    handleInputChange("dateOfBirth", e.target.value)
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Age
+                </label>
+                <input
+                  type="text"
+                  value={editedPatient.age || ""}
+                  onChange={(e) => handleInputChange("age", e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>
             </div>
           </div>
 
           {/* Health Metrics */}
-          <div className="mb-6 bg-orange-50 rounded-lg p-4 border border-orange-200">
-            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-              <HeartIcon className="w-5 h-5 mr-2 text-orange-600" />
-              Edit Health Metrics
+          <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+            <h3 className="text-lg font-bold mb-4 flex items-center">
+              <HeartIcon className="w-5 h-5 mr-2 text-orange-600" /> Health
+              Metrics
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Height (cm)</label>
-                <input
-                  type="number"
-                  value={editedPatient.height || ''}
-                  onChange={(e) => handleInputChange('height', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Weight (kg)</label>
-                <input
-                  type="number"
-                  value={editedPatient.weight || ''}
-                  onChange={(e) => handleInputChange('weight', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">BMI</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={editedPatient.bmi || ''}
-                  onChange={(e) => handleInputChange('bmi', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Waist (cm)</label>
-                <input
-                  type="number"
-                  value={editedPatient.waist || ''}
-                  onChange={(e) => handleInputChange('waist', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Vital Signs & Lab Results */}
-          <div className="mb-6 bg-purple-50 rounded-lg p-4 border border-purple-200">
-            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-              <BeakerIcon className="w-5 h-5 mr-2 text-purple-600" />
-              Edit Vital Signs & Lab Results
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Blood Pressure</label>
-                <input
-                  type="text"
-                  value={editedPatient.bp || ''}
-                  onChange={(e) => handleInputChange('bp', e.target.value)}
-                  placeholder="120/80"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">RBS (Random Blood Sugar)</label>
-                <input
-                  type="text"
-                  value={editedPatient.rbs || ''}
-                  onChange={(e) => handleInputChange('rbs', e.target.value)}
-                  placeholder="mg/dL"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">FBS (Fasting Blood Sugar)</label>
-                <input
-                  type="text"
-                  value={editedPatient.fbs || ''}
-                  onChange={(e) => handleInputChange('fbs', e.target.value)}
-                  placeholder="mg/dL"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                />
-              </div>
-            </div>
-            
-            {/* Vision Assessment */}
-            <div className="border-t border-purple-200 pt-4">
-              <h4 className="text-md font-semibold text-gray-700 mb-3 flex items-center">
-                <EyeIcon className="w-4 h-4 mr-2 text-purple-600" />
-                Vision Assessment
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Vision: Left Eye</label>
+              {["height", "weight", "bmi", "waist"].map((field) => (
+                <div key={field}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {field.toUpperCase()}
+                  </label>
                   <input
-                    type="text"
-                    value={editedPatient.visionLeft || ''}
-                    onChange={(e) => handleInputChange('visionLeft', e.target.value)}
-                    placeholder="6/6"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                    type="number"
+                    step={field === "bmi" ? "0.1" : "1"}
+                    value={editedPatient[field] || ""}
+                    onChange={(e) => handleInputChange(field, e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Vision: Right Eye</label>
+              ))}
+            </div>
+          </div>
+
+          {/* Vital Signs */}
+          <div className="bg-pink-50 rounded-lg p-4 border border-pink-200">
+            <h3 className="text-lg font-bold mb-4">Vital Signs</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { key: "bp", label: "BP" },
+                { key: "rbs", label: "RBS" },
+                { key: "fbs", label: "FBS" },
+                { key: "visionLeft", label: "Vision Left" },
+                { key: "visionRight", label: "Vision Right" },
+              ].map(({ key, label }) => (
+                <div key={key}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {label}
+                  </label>
                   <input
                     type="text"
-                    value={editedPatient.visionRight || ''}
-                    onChange={(e) => handleInputChange('visionRight', e.target.value)}
-                    placeholder="6/6"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                    value={editedPatient[key] || ""}
+                    onChange={(e) => handleInputChange(key, e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   />
                 </div>
-              </div>
+              ))}
             </div>
           </div>
 
-          {/* Medical History */}
-          <div className="mb-6 bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-              <ClipboardDocumentListIcon className="w-5 h-5 mr-2 text-yellow-600" />
-              Edit Medical History
-            </h3>
-            
-            {/* Medical History Table */}
-            <div className="bg-white rounded-lg border border-yellow-200 overflow-hidden mb-4">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-yellow-100">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      Relation
-                    </th>
-                    {commonMedicalConditions.map((condition) => (
-                      <th key={condition} className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        {condition}
-                      </th>
-                    ))}
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      Other
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {/* Patient History Row */}
-                  <tr className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">Patient</td>
-                    {commonMedicalConditions.map((condition) => (
-                      <td key={`patient-${condition}`} className="px-4 py-3 text-center">
-                        <input
-                          type="checkbox"
-                          checked={(editedPatient.patientHistory || []).includes(condition)}
-                          onChange={() => handleMedicalHistoryChange('Patient', condition)}
-                          className="h-4 w-4 text-yellow-600 border-gray-300 rounded focus:ring-yellow-500"
-                        />
-                      </td>
-                    ))}
-                    <td className="px-4 py-3">
-                      <textarea
-                        rows={2}
-                        value={editedPatient.otherPatientConditions || ''}
-                        onChange={(e) => handleInputChange('otherPatientConditions', e.target.value)}
-                        className="w-full border rounded-md px-2 py-1 text-sm border-gray-300 focus:ring-2 focus:ring-yellow-500"
-                        placeholder="e.g., Asthma, Allergies"
-                      />
-                    </td>
-                  </tr>
-                  
-                  {/* Family History Rows */}
-                  {['Father', 'Mother', 'Siblings'].map((relation) => (
-                    <tr key={relation} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">{relation}</td>
-                      {commonMedicalConditions.map((condition) => (
-                        <td key={`${relation}-${condition}`} className="px-4 py-3 text-center">
-                          <input
-                            type="checkbox"
-                            checked={(editedPatient[`familyHistory${relation}`] || []).includes(condition)}
-                            onChange={() => handleMedicalHistoryChange(relation, condition)}
-                            className="h-4 w-4 text-yellow-600 border-gray-300 rounded focus:ring-yellow-500"
-                          />
-                        </td>
-                      ))}
-                      <td className="px-4 py-3">
-                        <textarea
-                          rows={2}
-                          value={editedPatient[`other${relation}Conditions`] || ''}
-                          onChange={(e) => handleInputChange(`other${relation}Conditions`, e.target.value)}
-                          className="w-full border rounded-md px-2 py-1 text-sm border-gray-300 focus:ring-2 focus:ring-yellow-500"
-                          placeholder="e.g., Heart Disease"
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Lifestyle & Habits */}
-          <div className="mb-6 bg-green-50 rounded-lg p-4 border border-green-200">
-            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-              <SunIcon className="w-5 h-5 mr-2 text-green-600" />
-              Edit Lifestyle & Habits
-            </h3>
+          {/* Lifestyle */}
+          <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
+            <h3 className="text-lg font-bold mb-4">Lifestyle</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Breast Examination */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Alcohol Consumption</label>
-                <textarea
-                  rows={3}
-                  value={editedPatient.alcoholConsumption || ''}
-                  onChange={(e) => handleInputChange('alcoholConsumption', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                  placeholder="Describe frequency and amount..."
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Smoking Habits</label>
-                <textarea
-                  rows={3}
-                  value={editedPatient.smokingHabits || ''}
-                  onChange={(e) => handleInputChange('smokingHabits', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                  placeholder="Describe frequency and amount..."
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Current Problems */}
-          <div className="mb-6 bg-red-50 rounded-lg p-4 border border-red-200">
-            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-              <ExclamationTriangleIcon className="w-5 h-5 mr-2 text-red-600" />
-              Current Problems
-            </h3>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Current Issues & Symptoms</label>
-              <textarea
-                rows={4}
-                value={editedPatient.currentProblems || ''}
-                onChange={(e) => handleInputChange('currentProblems', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
-                placeholder="Describe current health problems and symptoms..."
-              />
-            </div>
-          </div>
-
-          {/* Screening Tests */}
-          <div className="mb-6 bg-indigo-50 rounded-lg p-4 border border-indigo-200">
-            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-              <BeakerIcon className="w-5 h-5 mr-2 text-indigo-600" />
-              Edit Screening Tests
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Breast Examination</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Breast Examination
+                </label>
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center">
                     <input
@@ -413,11 +393,18 @@ const EditPatientModal = ({ patient, isOpen, onClose, onSave }) => {
                       id="breastExamDone"
                       name="breastExamination"
                       value="Done"
-                      checked={editedPatient.breastExamination === 'Done'}
-                      onChange={(e) => handleInputChange('breastExamination', e.target.value)}
-                      className="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                      checked={editedPatient.breastExamination === "Done"}
+                      onChange={(e) =>
+                        handleInputChange("breastExamination", e.target.value)
+                      }
+                      className="h-4 w-4 text-red-600 border-gray-300 focus:ring-red-500"
                     />
-                    <label htmlFor="breastExamDone" className="ml-2 text-sm text-gray-700">Done</label>
+                    <label
+                      htmlFor="breastExamDone"
+                      className="ml-1 text-sm text-gray-700"
+                    >
+                      Done
+                    </label>
                   </div>
                   <div className="flex items-center">
                     <input
@@ -425,16 +412,27 @@ const EditPatientModal = ({ patient, isOpen, onClose, onSave }) => {
                       id="breastExamNotDone"
                       name="breastExamination"
                       value="Not Done"
-                      checked={editedPatient.breastExamination === 'Not Done'}
-                      onChange={(e) => handleInputChange('breastExamination', e.target.value)}
-                      className="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                      checked={editedPatient.breastExamination === "Not Done"}
+                      onChange={(e) =>
+                        handleInputChange("breastExamination", e.target.value)
+                      }
+                      className="h-4 w-4 text-red-600 border-gray-300 focus:ring-red-500"
                     />
-                    <label htmlFor="breastExamNotDone" className="ml-2 text-sm text-gray-700">Not Done</label>
+                    <label
+                      htmlFor="breastExamNotDone"
+                      className="ml-1 text-sm text-gray-700"
+                    >
+                      Not Done
+                    </label>
                   </div>
                 </div>
               </div>
+
+              {/* Pap Smear */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Pap Smear</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Pap Smear
+                </label>
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center">
                     <input
@@ -442,11 +440,18 @@ const EditPatientModal = ({ patient, isOpen, onClose, onSave }) => {
                       id="papSmearDone"
                       name="papSmear"
                       value="Done"
-                      checked={editedPatient.papSmear === 'Done'}
-                      onChange={(e) => handleInputChange('papSmear', e.target.value)}
-                      className="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                      checked={editedPatient.papSmear === "Done"}
+                      onChange={(e) =>
+                        handleInputChange("papSmear", e.target.value)
+                      }
+                      className="h-4 w-4 text-red-600 border-gray-300 focus:ring-red-500"
                     />
-                    <label htmlFor="papSmearDone" className="ml-2 text-sm text-gray-700">Done</label>
+                    <label
+                      htmlFor="papSmearDone"
+                      className="ml-1 text-sm text-gray-700"
+                    >
+                      Done
+                    </label>
                   </div>
                   <div className="flex items-center">
                     <input
@@ -454,64 +459,189 @@ const EditPatientModal = ({ patient, isOpen, onClose, onSave }) => {
                       id="papSmearNotDone"
                       name="papSmear"
                       value="Not Done"
-                      checked={editedPatient.papSmear === 'Not Done'}
-                      onChange={(e) => handleInputChange('papSmear', e.target.value)}
-                      className="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                      checked={editedPatient.papSmear === "Not Done"}
+                      onChange={(e) =>
+                        handleInputChange("papSmear", e.target.value)
+                      }
+                      className="h-4 w-4 text-red-600 border-gray-300 focus:ring-red-500"
                     />
-                    <label htmlFor="papSmearNotDone" className="ml-2 text-sm text-gray-700">Not Done</label>
+                    <label
+                      htmlFor="papSmearNotDone"
+                      className="ml-1 text-sm text-gray-700"
+                    >
+                      Not Done
+                    </label>
                   </div>
                 </div>
+              </div>
+
+              {/* Alcohol Consumption */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Alcohol Consumption
+                </label>
+                <input
+                  type="text"
+                  value={editedPatient.alcoholConsumption || ""}
+                  onChange={(e) =>
+                    handleInputChange("alcoholConsumption", e.target.value)
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+
+              {/* Smoking Habits */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Smoking Habits
+                </label>
+                <input
+                  type="text"
+                  value={editedPatient.smokingingHabits || ""}
+                  onChange={(e) =>
+                    handleInputChange("smokingingHabits", e.target.value)
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
               </div>
             </div>
           </div>
 
           {/* Treatment Plan */}
-          <div className="mb-6 bg-teal-50 rounded-lg p-4 border border-teal-200">
-            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-              <CheckCircleIcon className="w-5 h-5 mr-2 text-teal-600" />
-              Treatment Plan & Recommendations
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Treatment Plan</label>
-                <textarea
-                  rows={3}
-                  value={editedPatient.treatmentPlan || ''}
-                  onChange={(e) => handleInputChange('treatmentPlan', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                  placeholder="Enter treatment plan and recommendations..."
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Smoking Cessation Advice</label>
-                <textarea
-                  rows={3}
-                  value={editedPatient.smokingCessationAdvice || ''}
-                  onChange={(e) => handleInputChange('smokingCessationAdvice', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                  placeholder="Enter advice for smoking cessation..."
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Alcohol Abuse Advice</label>
-                <textarea
-                  rows={3}
-                  value={editedPatient.alcoholAbuseAdvice || ''}
-                  onChange={(e) => handleInputChange('alcoholAbuseAdvice', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                  placeholder="Enter advice for alcohol abuse..."
-                />
-              </div>
+          <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+            <h3 className="text-lg font-bold mb-4">Treatment Plan</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {[
+                { key: "treatmentPlan", label: "Treatment Plan" },
+                {
+                  key: "smokingCessationAdvice",
+                  label: "Smoking Cessation Advice",
+                },
+                { key: "alcoholAbuseAdvice", label: "Alcohol Abuse Advice" },
+              ].map(({ key, label }) => (
+                <div key={key}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {label}
+                  </label>
+                  <input
+                    type="text"
+                    value={editedPatient[key] || ""}
+                    onChange={(e) => handleInputChange(key, e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Medical History */}
+          <div className="bg-gray-100 rounded-lg p-4 border border-gray-200">
+            <h3 className="text-lg font-bold mb-4">Medical & Family History</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full border border-gray-300 rounded-lg">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="p-2 text-left text-gray-700">Condition</th>
+                    <th className="p-2 text-center text-gray-700">Patient</th>
+                    {familyRelations.map((rel) => (
+                      <th key={rel} className="p-2 text-center text-gray-700">
+                        {rel}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {commonMedicalConditions.map((cond) => (
+                    <tr key={cond} className="border-t">
+                      <td className="p-2 text-gray-700">{cond}</td>
+
+                      {/* Patient column */}
+                      <td className="p-2 text-center">
+                        <input
+                          type="checkbox"
+                          name="patientHistory"
+                          value={cond}
+                          checked={editedPatient.patientHistory?.includes(cond)}
+                          onChange={() =>
+                            handleCheckboxChange("patientHistory", cond)
+                          }
+                          className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                        />
+                      </td>
+
+                      {/* Family columns */}
+                      {familyRelations.map((rel) => {
+                        const key = familyKeyMap[rel];
+                        return (
+                          <td key={rel} className="p-2 text-center">
+                            <input
+                              type="checkbox"
+                              name={key}
+                              value={cond}
+                              checked={editedPatient[key]?.includes(cond)}
+                              onChange={(e) => handleCheckboxChange(key, cond)}
+                              className="h-4 w-4 text-yellow-500 border-gray-300 rounded focus:ring-yellow-400"
+                            />
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+
+                  {/* Other Text Field Row */}
+                  <tr className="border-t bg-gray-50">
+                    <td className="p-2 font-medium text-gray-700">
+                      Other (specify)
+                    </td>
+
+                    {/* Patient Other */}
+                    <td className="p-2">
+                      <input
+                        type="text"
+                        value={editedPatient.patientHistoryOther || ""}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "patientHistoryOther",
+                            e.target.value
+                          )
+                        }
+                        placeholder="Other..."
+                        className="w-full px-2 py-1 border border-gray-300 rounded-md"
+                      />
+                    </td>
+
+                    {/* Family Others */}
+                    {familyRelations.map((rel) => {
+                      const key = familyKeyMap[rel];
+                      return (
+                        <td key={rel} className="p-2">
+                          <input
+                            type="text"
+                            value={editedPatient[`${key}Other`] || ""}
+                            onChange={(e) =>
+                              handleInputChange(`${key}Other`, e.target.value)
+                            }
+                            placeholder="Other..."
+                            className="w-full px-2 py-1 border border-gray-300 rounded-md"
+                          />
+                        </td>
+                      );
+                    })}
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
 
         {/* Footer */}
         <div className="bg-gray-50 px-6 py-4 flex justify-between items-center border-t">
-          <div className="text-sm text-gray-500">* Changes will be saved when you click Save</div>
+          <div className="text-sm text-gray-500">
+            * Changes will be saved when you click Save
+          </div>
           <div className="flex space-x-3">
-            <button 
-              onClick={onClose} 
+            <button
+              onClick={onClose}
               className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
             >
               Cancel

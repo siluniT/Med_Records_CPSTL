@@ -1,13 +1,13 @@
 // src/App.js
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-// Corrected import path: ensure 'Pages' matches the actual folder casing
-import Login from "./Pages/Login"; 
-import AddNewPatient from "./Pages/AddNewPatient"; 
-import ProfilePage from "./Pages/ProfilePage"; // Make sure this is imported
-import Dashboard from "./Pages/Dashboard"; // Make sure this is imported
-import ManagePatients from './Pages/ManagePatients';
-import ManageStaff from './Pages/ManageStaff';
-import AddStaff from './Pages/AddStaff';
+
+import Login from "./Pages/Login";
+import AddNewPatient from "./Pages/AddNewPatient";
+import ProfilePage from "./Pages/ProfilePage";
+import Dashboard from "./Pages/Dashboard";
+import ManagePatients from "./Pages/ManagePatients";
+import ManageStaff from "./Pages/ManageStaff";
+import AddStaff from "./Pages/AddStaff";
 
 function App() {
   return (
@@ -22,8 +22,6 @@ function App() {
           <Route path="/ManagePatients" element={<ManagePatients />} />
           <Route path="/ManageStaff" element={<ManageStaff />} />
           <Route path="/AddStaff" element={<AddStaff />} />
-
-
         </Routes>
       </div>
     </Router>

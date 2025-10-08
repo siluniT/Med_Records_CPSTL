@@ -1,5 +1,5 @@
 // src/Pages/ManageStaff.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   UserCircleIcon,
   MagnifyingGlassIcon,
@@ -11,30 +11,33 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   BriefcaseIcon,
-} from '@heroicons/react/24/outline';
-import { useNavigate } from 'react-router-dom';
-import AppSidebar from '../Components/AppSidebar';
-import AppHeader from '../Components/AppHeader';
-import AppFooter from '../Components/AppFooter';
-import ViewStaffModal from '../Components/ViewStaffModal';
-import EditStaffModal from '../Components/EditStaffModal';
+} from "@heroicons/react/24/outline";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import AppSidebar from "../Components/AppSidebar";
+import AppHeader from "../Components/AppHeader";
+import AppFooter from "../Components/AppFooter";
+import ViewStaffModal from "../Components/ViewStaffModal";
+import EditStaffModal from "../Components/EditStaffModal";
 
 // Status Badge Component
 const StatusBadge = ({ status }) => {
   const getStatusStyles = () => {
     switch (status) {
-      case 'Active':
-        return 'bg-green-100 text-green-800 border-green-200';
-      
-      case 'Inactive':
-        return 'bg-red-100 text-red-800 border-red-200';
+      case "Active":
+        return "bg-green-100 text-green-800 border-green-200";
+
+      case "Inactive":
+        return "bg-red-100 text-red-800 border-red-200";
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
   return (
-    <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getStatusStyles()}`}>
+    <span
+      className={`px-3 py-1 text-xs font-medium rounded-full border ${getStatusStyles()}`}
+    >
       {status}
     </span>
   );
@@ -42,9 +45,12 @@ const StatusBadge = ({ status }) => {
 
 // Toggle Switch Component
 const ToggleSwitch = ({ status, onToggle }) => {
-  const isChecked = status === 'Active';
+  const isChecked = status === "Active";
   return (
-    <label htmlFor={`toggle-${onToggle}`} className="flex items-center cursor-pointer">
+    <label
+      htmlFor={`toggle-${onToggle}`}
+      className="flex items-center cursor-pointer"
+    >
       <div className="relative">
         <input
           id={`toggle-${onToggle}`}
@@ -53,8 +59,16 @@ const ToggleSwitch = ({ status, onToggle }) => {
           checked={isChecked}
           onChange={onToggle}
         />
-        <div className={`block w-10 h-6 rounded-full ${isChecked ? 'bg-green-600' : 'bg-red-300'}`}></div>
-        <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${isChecked ? 'translate-x-4' : 'translate-x-0'}`}></div>
+        <div
+          className={`block w-10 h-6 rounded-full ${
+            isChecked ? "bg-green-600" : "bg-red-300"
+          }`}
+        ></div>
+        <div
+          className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${
+            isChecked ? "translate-x-4" : "translate-x-0"
+          }`}
+        ></div>
       </div>
     </label>
   );
@@ -63,9 +77,9 @@ const ToggleSwitch = ({ status, onToggle }) => {
 function ManageStaff() {
   const [staff, setStaff] = useState([]);
   const [filteredStaff, setFilteredStaff] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterDesignation, setFilterDesignation] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterDesignation, setFilterDesignation] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
 
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -79,13 +93,21 @@ function ManageStaff() {
 
   // Load staff from localStorage
   useEffect(() => {
-    const storedStaff = JSON.parse(localStorage.getItem('staff') || '[]');
-    const staffWithStatus = storedStaff.map((member) => ({
-      ...member,
-      status: member.status || 'Active'
-    }));
-    setStaff(staffWithStatus);
-    setFilteredStaff(staffWithStatus);
+    const fetchStaff = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/staff");
+        const staffData = response.data.map((member) => ({
+          ...member,
+          status: member.status || "Active",
+        }));
+        setStaff(staffData);
+        setFilteredStaff(staffData);
+      } catch (error) {
+        console.error("Error fetching staff:", error);
+      }
+    };
+
+    fetchStaff();
   }, []);
 
   // Search and filter
@@ -93,19 +115,28 @@ function ManageStaff() {
     let filtered = staff;
 
     if (searchTerm) {
-      filtered = filtered.filter((member) =>
-        (member.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (member.epfNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (member.contactNo || '').includes(searchTerm) ||
-        (member.medicalLicenseNumber || '').toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (member) =>
+          (member.name || "")
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          (member.epfNumber || "")
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          (member.contactNo || "").includes(searchTerm) ||
+          (member.medicalLicenseNumber || "")
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())
       );
     }
 
-    if (filterDesignation !== 'all') {
-      filtered = filtered.filter((member) => member.designation === filterDesignation);
+    if (filterDesignation !== "all") {
+      filtered = filtered.filter(
+        (member) => member.designation === filterDesignation
+      );
     }
 
-    if (filterStatus !== 'all') {
+    if (filterStatus !== "all") {
       filtered = filtered.filter((member) => member.status === filterStatus);
     }
 
@@ -116,7 +147,10 @@ function ManageStaff() {
   // Pagination
   const indexOfLastStaff = currentPage * staffPerPage;
   const indexOfFirstStaff = indexOfLastStaff - staffPerPage;
-  const currentStaffList = filteredStaff.slice(indexOfFirstStaff, indexOfLastStaff);
+  const currentStaffList = filteredStaff.slice(
+    indexOfFirstStaff,
+    indexOfLastStaff
+  );
   const totalPages = Math.ceil(filteredStaff.length / staffPerPage);
 
   // Actions
@@ -130,29 +164,51 @@ function ManageStaff() {
     setIsEditModal(true);
   };
 
-  const handleSaveEdit = (editedStaff) => {
-    const updatedStaff = staff.map((s) =>
-      s.id === editedStaff.id ? { ...editedStaff, lastUpdated: new Date().toISOString() } : s
-    );
+  const handleSaveEdit = async (editedStaff) => {
+    try {
+      // Send updated staff to backend
+      await axios.put(
+        `http://localhost:5000/staff/update/${editedStaff.id}`,
+        editedStaff
+      );
 
-    setStaff(updatedStaff);
-    localStorage.setItem('staff', JSON.stringify(updatedStaff));
-    setSelectedStaff(editedStaff);
-    alert('Staff information updated successfully!');
+      // Update local state
+      const updatedStaff = staff.map((s) =>
+        s.id === editedStaff.id ? editedStaff : s
+      );
+      setStaff(updatedStaff);
+
+      alert("Staff information updated successfully!");
+      setIsEditModal(false);
+    } catch (error) {
+      console.error("Error updating staff:", error);
+      alert("Failed to update staff information.");
+    }
   };
 
-  const handleDelete = (staffId) => {
-    if (window.confirm('Are you sure you want to delete this staff member?')) {
+  const handleDelete = async (staffId) => {
+    if (!window.confirm("Are you sure you want to delete this staff member?"))
+      return;
+
+    try {
+      // Call backend API to delete staff
+      await axios.delete(`http://localhost:5000/staff/${staffId}`);
+
+      // Update local state after successful deletion
       const updatedStaff = staff.filter((s) => s.id !== staffId);
       setStaff(updatedStaff);
-      localStorage.setItem('staff', JSON.stringify(updatedStaff));
+
+      alert("Staff member deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting staff:", error);
+      alert("Failed to delete staff member.");
     }
   };
 
   const handleToggleStatus = (staffId) => {
     const updated = staff.map((s) => {
       if (s.id !== staffId) return s;
-      const newStatus = s.status === 'Active' ? 'Inactive' : 'Active';
+      const newStatus = s.status === "Active" ? "Inactive" : "Active";
       return {
         ...s,
         status: newStatus,
@@ -160,21 +216,31 @@ function ManageStaff() {
       };
     });
     setStaff(updated);
-    localStorage.setItem('staff', JSON.stringify(updated));
+    localStorage.setItem("staff", JSON.stringify(updated));
   };
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
   const closeSidebar = () => setIsSidebarOpen(false);
 
-  const designations = ['Doctor', 'Nurse', 'Administrator', 'Lab Technician', 'Pharmacist'];
+  const designations = [
+    "Doctor",
+    "Nurse",
+    "Administrator",
+    "Lab Technician",
+    "Pharmacist",
+  ];
 
   const handleAddStaffClick = () => {
-    navigate('/AddStaff');
+    navigate("/AddStaff");
   };
 
   return (
     <div className="flex h-screen bg-gray-100 font-sans">
-      <AppSidebar isSidebarOpen={isSidebarOpen} onCloseSidebar={closeSidebar} currentPage="Manage Staff" />
+      <AppSidebar
+        isSidebarOpen={isSidebarOpen}
+        onCloseSidebar={closeSidebar}
+        currentPage="Manage Staff"
+      />
 
       <main className="flex-1 flex flex-col overflow-hidden">
         <AppHeader onMenuToggle={toggleSidebar} isSidebarOpen={isSidebarOpen} />
@@ -199,9 +265,11 @@ function ManageStaff() {
               </div>
               <div className="flex items-center space-x-2 mb-4">
                 <span className="text-sm text-gray-600">Total Staff:</span>
-                <span className="text-lg font-semibold text-red-600">{staff.length}</span>
+                <span className="text-lg font-semibold text-red-600">
+                  {staff.length}
+                </span>
               </div>
-              
+
               {/* Search and Filters */}
               <div className="flex flex-col md:flex-row gap-4 mb-6">
                 <div className="flex-1">
@@ -250,18 +318,35 @@ function ManageStaff() {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">EPF No</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff Info</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Designation</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Specialization</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          EPF No
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Staff Info
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Designation
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Specialization
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Contact
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {currentStaffList.map((member) => (
-                        <tr key={member.id} className="hover:bg-gray-50 transition-colors">
+                        <tr
+                          key={member.id}
+                          className="hover:bg-gray-50 transition-colors"
+                        >
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {member.epfNumber}
                           </td>
@@ -279,17 +364,25 @@ function ManageStaff() {
                                 </div>
                               )}
                               <div>
-                                <div className="text-sm font-medium text-gray-900">{member.name}</div>
-                                <div className="text-sm text-gray-500">{member.gender}</div>
+                                <div className="text-sm font-medium text-gray-900">
+                                  {member.name}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {member.gender}
+                                </div>
                               </div>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{member.designation}</div>
-                            <div className="text-sm text-gray-500">{member.experience} years exp.</div>
+                            <div className="text-sm text-gray-900">
+                              {member.designation}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {member.experience} years exp.
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {member.primarySpecialization || '—'}
+                            {member.primarySpecialization || "—"}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center text-sm text-gray-900">
@@ -305,7 +398,9 @@ function ManageStaff() {
                               />
                               <span
                                 className={`text-sm font-medium ${
-                                  member.status === 'Active' ? 'text-green-600' : 'text-red-600'
+                                  member.status === "Active"
+                                    ? "text-green-600"
+                                    : "text-red-600"
                                 }`}
                               >
                                 {member.status}
@@ -344,11 +439,15 @@ function ManageStaff() {
                 ) : (
                   <div className="text-center py-12">
                     <UserCircleIcon className="mx-auto h-12 w-12 text-gray-400" />
-                    <p className="mt-2 text-sm text-gray-600">No staff members found</p>
+                    <p className="mt-2 text-sm text-gray-600">
+                      No staff members found
+                    </p>
                     <p className="mt-1 text-xs text-gray-500">
-                      {searchTerm || filterDesignation !== 'all' || filterStatus !== 'all'
-                        ? 'Try adjusting your search or filter criteria'
-                        : 'Add a new staff member to get started'}
+                      {searchTerm ||
+                      filterDesignation !== "all" ||
+                      filterStatus !== "all"
+                        ? "Try adjusting your search or filter criteria"
+                        : "Add a new staff member to get started"}
                     </p>
                   </div>
                 )}
@@ -359,16 +458,20 @@ function ManageStaff() {
                 <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-gray-700">
-                      Showing {indexOfFirstStaff + 1} to {Math.min(indexOfLastStaff, filteredStaff.length)} of {filteredStaff.length} staff members
+                      Showing {indexOfFirstStaff + 1} to{" "}
+                      {Math.min(indexOfLastStaff, filteredStaff.length)} of{" "}
+                      {filteredStaff.length} staff members
                     </div>
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                        onClick={() =>
+                          setCurrentPage((prev) => Math.max(prev - 1, 1))
+                        }
                         disabled={currentPage === 1}
                         className={`p-2 rounded ${
                           currentPage === 1
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                            : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
                         }`}
                       >
                         <ChevronLeftIcon className="w-5 h-5" />
@@ -376,19 +479,28 @@ function ManageStaff() {
 
                       {[...Array(totalPages)].map((_, index) => {
                         const page = index + 1;
-                        if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
+                        if (
+                          page === 1 ||
+                          page === totalPages ||
+                          (page >= currentPage - 1 && page <= currentPage + 1)
+                        ) {
                           return (
                             <button
                               key={page}
                               onClick={() => setCurrentPage(page)}
                               className={`px-3 py-1 rounded ${
-                                currentPage === page ? 'bg-red-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                                currentPage === page
+                                  ? "bg-red-500 text-white"
+                                  : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
                               }`}
                             >
                               {page}
                             </button>
                           );
-                        } else if (page === currentPage - 2 || page === currentPage + 2) {
+                        } else if (
+                          page === currentPage - 2 ||
+                          page === currentPage + 2
+                        ) {
                           return (
                             <span key={page} className="px-1">
                               ...
@@ -399,12 +511,16 @@ function ManageStaff() {
                       })}
 
                       <button
-                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                        onClick={() =>
+                          setCurrentPage((prev) =>
+                            Math.min(prev + 1, totalPages)
+                          )
+                        }
                         disabled={currentPage === totalPages}
                         className={`p-2 rounded ${
                           currentPage === totalPages
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                            : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
                         }`}
                       >
                         <ChevronRightIcon className="w-5 h-5" />

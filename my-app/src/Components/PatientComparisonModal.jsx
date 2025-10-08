@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   XMarkIcon,
   ChartBarIcon,
@@ -9,14 +9,14 @@ import {
   ExclamationTriangleIcon,
   CheckCircleIcon,
   InformationCircleIcon,
-} from '@heroicons/react/24/outline';
+} from "@heroicons/react/24/outline";
 import {
   ScaleIcon,
   CubeIcon,
   UserCircleIcon,
   HeartIcon,
   BeakerIcon,
-} from '@heroicons/react/24/solid';
+} from "@heroicons/react/24/solid";
 import {
   LineChart,
   Line,
@@ -29,139 +29,131 @@ import {
   PieChart,
   Pie,
   Cell,
-} from 'recharts';
+} from "recharts";
 
 const PatientComparisonModal = ({ patient, isOpen, onClose }) => {
-  const [activeView, setActiveView] = useState('monthly');
-  const [selectedMetric, setSelectedMetric] = useState('weight');
+  const [activeView, setActiveView] = useState("monthly");
+  const [selectedMetric, setSelectedMetric] = useState("weight");
   const [comparisonData, setComparisonData] = useState(null);
 
   useEffect(() => {
-    if (patient && isOpen) {
-      generateComparisonData();
-    }
+    if (patient && isOpen) generateComparisonData();
   }, [patient, isOpen]);
 
+  // Generate realistic historical data
   const generateComparisonData = () => {
     const currentDate = new Date();
     const monthlyData = [];
     const yearlyData = [];
-
     const currentYear = currentDate.getFullYear();
+
     for (let i = 0; i < 12; i++) {
       const date = new Date(currentYear, i, 1);
-      const monthData = {
-        month: date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-        weight: generateRealisticValue(patient.weight, 'weight', 12 - i),
+      monthlyData.push({
+        month: date.toLocaleDateString("en-US", {
+          month: "short",
+          year: "numeric",
+        }),
+        weight: generateRealisticValue(patient.weight, "weight", 12 - i),
         height: patient.height,
-        bmi: generateRealisticValue(patient.bmi, 'bmi', 12 - i),
-        waist: generateRealisticValue(patient.waist, 'waist', 12 - i),
+        bmi: generateRealisticValue(patient.bmi, "bmi", 12 - i),
+        waist: generateRealisticValue(patient.waist, "waist", 12 - i),
         bp: generateRealisticBP(patient.bp, 12 - i),
-        rbs: generateRealisticValue(patient.rbs, 'rbs', 12 - i),
-        fbs: generateRealisticValue(patient.fbs, 'fbs', 12 - i),
+        rbs: generateRealisticValue(patient.rbs, "rbs", 12 - i),
+        fbs: generateRealisticValue(patient.fbs, "fbs", 12 - i),
         visionLeft: patient.visionLeft,
         visionRight: patient.visionRight,
-      };
-      monthlyData.push(monthData);
+      });
     }
 
     for (let i = 4; i >= 0; i--) {
-      const year = currentDate.getFullYear() - i;
-      const yearData = {
+      const year = currentYear - i;
+      yearlyData.push({
         year: year.toString(),
-        weight: generateRealisticValue(patient.weight, 'weight', i * 12),
+        weight: generateRealisticValue(patient.weight, "weight", i * 12),
         height: patient.height,
-        bmi: generateRealisticValue(patient.bmi, 'bmi', i * 12),
-        waist: generateRealisticValue(patient.waist, 'waist', i * 12),
+        bmi: generateRealisticValue(patient.bmi, "bmi", i * 12),
+        waist: generateRealisticValue(patient.waist, "waist", i * 12),
         bp: generateRealisticBP(patient.bp, i * 12),
-        rbs: generateRealisticValue(patient.rbs, 'rbs', i * 12),
-        fbs: generateRealisticValue(patient.fbs, 'fbs', i * 12),
+        rbs: generateRealisticValue(patient.rbs, "rbs", i * 12),
+        fbs: generateRealisticValue(patient.fbs, "fbs", i * 12),
         visionLeft: patient.visionLeft,
         visionRight: patient.visionRight,
-      };
-      yearlyData.push(yearData);
+      });
     }
 
     setComparisonData({ monthly: monthlyData, yearly: yearlyData });
   };
 
   const generateRealisticValue = (baseValue, metric, monthsAgo) => {
-    if (!baseValue) return null;
+    if (baseValue === undefined || baseValue === null) return null;
+
     const numericBase = parseFloat(baseValue);
     if (isNaN(numericBase)) return baseValue;
 
-    let variation = 0;
     const randomFactor = (Math.random() - 0.5) * 0.2;
+    let variation = 0;
 
     switch (metric) {
-      case 'weight':
+      case "weight":
         variation = monthsAgo * 0.5 + randomFactor * 5;
         break;
-      case 'bmi':
+      case "bmi":
         variation = monthsAgo * 0.2 + randomFactor * 2;
         break;
-      case 'waist':
+      case "waist":
         variation = monthsAgo * 0.3 + randomFactor * 3;
         break;
-      case 'rbs':
-      case 'fbs':
+      case "rbs":
+      case "fbs":
         variation = randomFactor * 20;
         break;
       default:
         variation = randomFactor * numericBase * 0.1;
     }
-
-    const result = numericBase - variation;
-    return Math.max(0, Math.round(result * 10) / 10);
+    return Math.max(0, Math.round((numericBase - variation) * 10) / 10);
   };
 
   const generateRealisticBP = (baseBP, monthsAgo) => {
-    if (!baseBP) return null;
+    if (!baseBP) baseBP = "120/80";
     const bpMatch = baseBP.match(/(\d+)\/(\d+)/);
     if (!bpMatch) return baseBP;
 
-    const systolic = parseInt(bpMatch[1]);
-    const diastolic = parseInt(bpMatch[2]);
+    const systolic = bpMatch ? parseInt(bpMatch[1]) : 120;
+    const diastolic = bpMatch ? parseInt(bpMatch[2]) : 80;
 
     const timeVariation = monthsAgo * 0.5;
-    const sysVariation = (Math.random() - 0.5) * 20 + timeVariation;
-    const diaVariation = (Math.random() - 0.5) * 10 + timeVariation * 0.5;
-
-    const newSystolic = Math.max(90, Math.min(200, systolic + sysVariation));
-    const newDiastolic = Math.max(60, Math.min(120, diastolic + diaVariation));
+    const newSystolic = Math.max(
+      90,
+      Math.min(200, systolic + (Math.random() - 0.5) * 20 + timeVariation)
+    );
+    const newDiastolic = Math.max(
+      60,
+      Math.min(
+        120,
+        diastolic + (Math.random() - 0.5) * 10 + timeVariation * 0.5
+      )
+    );
 
     return `${Math.round(newSystolic)}/${Math.round(newDiastolic)}`;
   };
 
   const calculateTrend = (data, metric) => {
-    if (!data || data.length < 2) return { trend: 'stable', percentage: 0 };
-  
-    let recentValue, previousValue;
-  
-    
-    if (metric === 'bp') {
-      recentValue = parseFloat(data[data.length - 1]?.bp?.split('/')[0]);
-      previousValue = parseFloat(data[data.length - 2]?.bp?.split('/')[0]);
-    } else {
-      recentValue = parseFloat(data[data.length - 1][metric]);
-      previousValue = parseFloat(data[data.length - 2][metric]);
-    }
-  
-    if (isNaN(recentValue) || isNaN(previousValue) || previousValue === 0) {
-      return { trend: 'stable', percentage: 0 };
-    }
-  
-    const percentage = ((recentValue - previousValue) / previousValue) * 100;
-    const trend = percentage > 2 ? 'up' : percentage < -2 ? 'down' : 'stable';
-  
+    if (!data || data.length < 2) return { trend: "stable", percentage: 0 };
+    const recent = parseFloat(data[data.length - 1][metric]);
+    const previous = parseFloat(data[data.length - 2][metric]);
+    if (isNaN(recent) || isNaN(previous) || previous === 0)
+      return { trend: "stable", percentage: 0 };
+    const percentage = ((recent - previous) / previous) * 100;
+    const trend = percentage > 2 ? "up" : percentage < -2 ? "down" : "stable";
     return { trend, percentage: Math.abs(percentage) };
   };
 
   const getTrendIcon = (trend) => {
     switch (trend) {
-      case 'up':
+      case "up":
         return <ArrowUpIcon className="w-4 h-4 text-red-500" />;
-      case 'down':
+      case "down":
         return <ArrowDownIcon className="w-4 h-4 text-green-500" />;
       default:
         return <MinusIcon className="w-4 h-4 text-gray-500" />;
@@ -169,77 +161,66 @@ const PatientComparisonModal = ({ patient, isOpen, onClose }) => {
   };
 
   const TrendIndicator = ({ trend, percentage }) => {
-    const getTrendColor = () => {
-      switch (trend) {
-        case 'up':
-          return 'text-red-500 bg-red-50';
-        case 'down':
-          return 'text-green-500 bg-green-50';
-        default:
-          return 'text-gray-500 bg-gray-50';
-      }
-    };
+    const colorClass =
+      trend === "up"
+        ? "text-red-500 bg-red-50"
+        : trend === "down"
+        ? "text-green-500 bg-green-50"
+        : "text-gray-500 bg-gray-50";
     return (
-      <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getTrendColor()}`}>
+      <div
+        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${colorClass}`}
+      >
         {getTrendIcon(trend)}
         <span className="ml-1">
-          {percentage > 0 ? `${percentage.toFixed(1)}%` : 'No change'}
+          {percentage > 0 ? `${percentage.toFixed(1)}%` : "No change"}
         </span>
       </div>
     );
   };
 
   const getHealthStatus = (metric, value) => {
-    if (!value) return { status: 'info', message: 'N/A' };
     const numValue = parseFloat(value);
     switch (metric) {
-      case 'bmi': {
-        if (numValue < 18.5) return { status: 'warning', message: 'Underweight' };
-        if (numValue > 25) return { status: 'danger', message: 'Overweight' };
-        return { status: 'success', message: 'Normal' };
-      }
-      case 'bp': {
+      case "bmi":
+        return numValue < 18.5
+          ? { status: "warning", message: "Underweight" }
+          : numValue > 25
+          ? { status: "danger", message: "Overweight" }
+          : { status: "success", message: "Normal" };
+      case "bp": {
         const bpMatch = value?.match(/(\d+)\/(\d+)/);
         if (bpMatch) {
           const systolic = parseInt(bpMatch[1]);
-          if (systolic > 140) return { status: 'danger', message: 'High BP' };
-          if (systolic < 90) return { status: 'warning', message: 'Low BP' };
+          if (systolic > 140) return { status: "danger", message: "High BP" };
+          if (systolic < 90) return { status: "warning", message: "Low BP" };
         }
-        return { status: 'success', message: 'Normal BP' };
+        return { status: "success", message: "Normal BP" };
       }
-      case 'rbs': {
-        if (numValue > 200) return { status: 'danger', message: 'High' };
-        if (numValue > 140) return { status: 'warning', message: 'Elevated' };
-        return { status: 'success', message: 'Normal' };
-      }
-      case 'fbs': {
-        if (numValue > 126) return { status: 'danger', message: 'High' };
-        if (numValue > 100) return { status: 'warning', message: 'Elevated' };
-        return { status: 'success', message: 'Normal' };
-      }
-      case 'weight': {
-        const latestWeight = parseFloat(patient.weight);
-        if (numValue > latestWeight * 1.05) return { status: 'danger', message: 'Gaining' };
-        if (numValue < latestWeight * 0.95) return { status: 'warning', message: 'Losing' };
-        return { status: 'success', message: 'Stable' };
-      }
-      case 'waist': {
-        if (numValue > 102) return { status: 'danger', message: 'High' }; 
-        if (numValue > 88) return { status: 'danger', message: 'High' }; 
-        return { status: 'success', message: 'Normal' };
-      }
+      case "rbs":
+        return numValue > 200
+          ? { status: "danger", message: "High" }
+          : numValue > 140
+          ? { status: "warning", message: "Elevated" }
+          : { status: "success", message: "Normal" };
+      case "fbs":
+        return numValue > 126
+          ? { status: "danger", message: "High" }
+          : numValue > 100
+          ? { status: "warning", message: "Elevated" }
+          : { status: "success", message: "Normal" };
       default:
-        return { status: 'info', message: 'Recorded' };
+        return { status: "info", message: "Recorded" };
     }
   };
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'success':
+      case "success":
         return <CheckCircleIcon className="w-4 h-4 text-green-500" />;
-      case 'warning':
+      case "warning":
         return <ExclamationTriangleIcon className="w-4 h-4 text-yellow-500" />;
-      case 'danger':
+      case "danger":
         return <ExclamationTriangleIcon className="w-4 h-4 text-red-500" />;
       default:
         return <InformationCircleIcon className="w-4 h-4 text-blue-500" />;
@@ -247,53 +228,93 @@ const PatientComparisonModal = ({ patient, isOpen, onClose }) => {
   };
 
   const metrics = [
-    { key: 'weight', label: 'Weight (kg)', icon: ScaleIcon, color: 'text-purple-500', hex: '#A855F7' },
-    { key: 'bmi', label: 'BMI', icon: CubeIcon, color: 'text-orange-500', hex: '#F97316' },
-    { key: 'waist', label: 'Waist (cm)', icon: UserCircleIcon, color: 'text-lime-500', hex: '#84CC16' },
-    { key: 'bp', label: 'Blood Pressure', icon: HeartIcon, color: 'text-rose-500', hex: '#F43F5E' },
-    { key: 'rbs', label: 'RBS (mg/dL)', icon: BeakerIcon, color: 'text-blue-500', hex: '#3B82F6' },
-    { key: 'fbs', label: 'FBS (mg/dL)', icon: BeakerIcon, color: 'text-teal-500', hex: '#14B8A6' },
+    {
+      key: "weight",
+      label: "Weight (kg)",
+      icon: ScaleIcon,
+      color: "text-purple-500",
+      hex: "#A855F7",
+    },
+    {
+      key: "bmi",
+      label: "BMI",
+      icon: CubeIcon,
+      color: "text-orange-500",
+      hex: "#F97316",
+    },
+    {
+      key: "waist",
+      label: "Waist (cm)",
+      icon: UserCircleIcon,
+      color: "text-lime-500",
+      hex: "#84CC16",
+    },
+    {
+      key: "bp",
+      label: "Blood Pressure",
+      icon: HeartIcon,
+      color: "text-rose-500",
+      hex: "#F43F5E",
+    },
+    {
+      key: "rbs",
+      label: "RBS (mg/dL)",
+      icon: BeakerIcon,
+      color: "text-blue-500",
+      hex: "#3B82F6",
+    },
+    {
+      key: "fbs",
+      label: "FBS (mg/dL)",
+      icon: BeakerIcon,
+      color: "text-teal-500",
+      hex: "#14B8A6",
+    },
   ];
 
   if (!isOpen || !patient || !comparisonData) return null;
 
   const currentData = comparisonData[activeView];
   const selectedMetricInfo = metrics.find((m) => m.key === selectedMetric);
-  
-  
   const selectedMetricData =
     currentData
-      ?.map((item) => {
-        let value;
-        if (selectedMetric === 'bp') {
-          
-          value = item.bp ? parseFloat(item.bp.split('/')[0]) : null;
-        } else {
-          
-          value = parseFloat(item[selectedMetric]);
-        }
-        return {
-          period: activeView === 'monthly' ? item.month : item.year,
-          value: value,
-        };
-      })
-      .filter((item) => item.value !== null && !isNaN(item.value)) || [];
+      ?.map((item) => ({
+        period: activeView === "monthly" ? item.month : item.year,
+        value:
+          selectedMetric === "bp"
+            ? parseInt(item.bp?.split("/")[0] ?? "120")
+            : parseFloat(item[selectedMetric] ?? 0),
+      }))
+      .filter((item) => !isNaN(item.value)) || [];
 
-  const pieData = (() => {
-    const filteredData = currentData.filter((d) => d[selectedMetric]);
-    const normalCount = filteredData.filter((d) => getHealthStatus(selectedMetric, d[selectedMetric]).status === 'success').length;
-    const warningCount = filteredData.filter((d) => getHealthStatus(selectedMetric, d[selectedMetric]).status === 'warning').length;
-    const dangerCount = filteredData.filter((d) => getHealthStatus(selectedMetric, d[selectedMetric]).status === 'danger').length;
+  // Pie chart logic
+  const pieData = [
+    {
+      name: "Normal",
+      value: currentData.filter(
+        (d) =>
+          getHealthStatus(selectedMetric, d[selectedMetric]).status ===
+          "success"
+      ).length,
+    },
+    {
+      name: "Warning",
+      value: currentData.filter(
+        (d) =>
+          getHealthStatus(selectedMetric, d[selectedMetric]).status ===
+          "warning"
+      ).length,
+    },
+    {
+      name: "Danger",
+      value: currentData.filter(
+        (d) =>
+          getHealthStatus(selectedMetric, d[selectedMetric]).status === "danger"
+      ).length,
+    },
+  ];
 
-    const data = [];
-    if (normalCount > 0) data.push({ name: 'Normal', value: normalCount });
-    if (warningCount > 0) data.push({ name: 'Warning', value: warningCount });
-    if (dangerCount > 0) data.push({ name: 'Danger', value: dangerCount });
-
-    return data;
-  })();
-
-  const COLORS = ['#22C55E', '#FBBF24', '#EF4444']; 
+  const COLORS = ["#22C55E", "#FBBF24", "#EF4444"];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -304,13 +325,18 @@ const PatientComparisonModal = ({ patient, isOpen, onClose }) => {
             <div className="flex items-center">
               <ChartBarIcon className="w-8 h-8 mr-3" />
               <div>
-                <h2 className="text-2xl font-bold">Health Metrics Comparison</h2>
+                <h2 className="text-2xl font-bold">
+                  Health Metrics Comparison
+                </h2>
                 <p className="text-red-100 text-sm">
                   {patient.name} - {patient.registrationNo}
                 </p>
               </div>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-red-700 rounded-full transition-colors">
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-red-700 rounded-full transition-colors"
+            >
               <XMarkIcon className="w-6 h-6" />
             </button>
           </div>
@@ -320,33 +346,29 @@ const PatientComparisonModal = ({ patient, isOpen, onClose }) => {
         <div className="overflow-y-auto max-h-[calc(90vh-180px)] p-6">
           {/* View Toggle */}
           <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-6">
-            <button
-              onClick={() => setActiveView('monthly')}
-              className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center justify-center ${
-                activeView === 'monthly'
-                  ? 'bg-white text-red-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <CalendarDaysIcon className="w-4 h-4 mr-2" />
-              Monthly Comparison
-            </button>
-            <button
-              onClick={() => setActiveView('yearly')}
-              className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center justify-center ${
-                activeView === 'yearly'
-                  ? 'bg-white text-red-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <CalendarDaysIcon className="w-4 h-4 mr-2" />
-              Yearly Comparison
-            </button>
+            {["monthly", "yearly"].map((view) => (
+              <button
+                key={view}
+                onClick={() => setActiveView(view)}
+                className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center justify-center ${
+                  activeView === view
+                    ? "bg-white text-red-600 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                <CalendarDaysIcon className="w-4 h-4 mr-2" />
+                {view === "monthly"
+                  ? "Monthly Comparison"
+                  : "Yearly Comparison"}
+              </button>
+            ))}
           </div>
 
           {/* Metric Selector */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">Select Health Metric</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">
+              Select Health Metric
+            </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
               {metrics.map((metric) => {
                 const IconComponent = metric.icon;
@@ -357,11 +379,15 @@ const PatientComparisonModal = ({ patient, isOpen, onClose }) => {
                     className={`p-3 rounded-lg border transition-colors text-center ${
                       selectedMetric === metric.key
                         ? `border-white bg-gray-100 shadow-lg ring-2 ${metric.color} ring-offset-2 ring-gray-200`
-                        : 'border-gray-200 hover:border-gray-300'
+                        : "border-gray-200 hover:border-gray-300"
                     }`}
                   >
-                    <IconComponent className={`w-6 h-6 mx-auto mb-1 ${metric.color}`} />
-                    <div className="text-xs font-medium text-gray-700">{metric.label}</div>
+                    <IconComponent
+                      className={`w-6 h-6 mx-auto mb-1 ${metric.color}`}
+                    />
+                    <div className="text-xs font-medium text-gray-700">
+                      {metric.label}
+                    </div>
                   </button>
                 );
               })}
@@ -369,18 +395,27 @@ const PatientComparisonModal = ({ patient, isOpen, onClose }) => {
           </div>
 
           {/* Comparison Chart Area */}
-          <div className="bg-gray-50 rounded-lg p-6 mb-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="lg:col-span-1">
+          <div className="bg-gray-50 rounded-lg p-6 mb-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="text-lg font-semibold text-gray-800">{selectedMetricInfo?.label} Trends</h4>
+                <h4 className="text-lg font-semibold text-gray-800">
+                  {selectedMetricInfo?.label} Trends
+                </h4>
                 {selectedMetricData.length > 1 && (
                   <div className="flex items-center space-x-2">
                     {(() => {
                       const trend = calculateTrend(currentData, selectedMetric);
-                      return <TrendIndicator trend={trend.trend} percentage={trend.percentage} />;
+                      return (
+                        <TrendIndicator
+                          trend={trend.trend}
+                          percentage={trend.percentage}
+                        />
+                      );
                     })()}
                     <span className="text-sm text-gray-600">
-                      {activeView === 'monthly' ? 'from last month' : 'from last year'}
+                      {activeView === "monthly"
+                        ? "from last month"
+                        : "from last year"}
                     </span>
                   </div>
                 )}
@@ -389,7 +424,7 @@ const PatientComparisonModal = ({ patient, isOpen, onClose }) => {
               {/* Line Chart */}
               {selectedMetricData.length > 0 ? (
                 <div className="w-full h-80">
-                  <ResponsiveContainer width="80%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={selectedMetricData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="period" />
@@ -399,7 +434,7 @@ const PatientComparisonModal = ({ patient, isOpen, onClose }) => {
                       <Line
                         type="monotone"
                         dataKey="value"
-                        stroke={selectedMetricInfo?.hex || '#60A5FA'}
+                        stroke={selectedMetricInfo?.hex || "#60A5FA"}
                         strokeWidth={2}
                         dot={{ r: 4 }}
                         name={selectedMetricInfo?.label}
@@ -408,86 +443,105 @@ const PatientComparisonModal = ({ patient, isOpen, onClose }) => {
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div className="text-center text-gray-500 py-10">No data available for this metric.</div>
+                <div className="text-center text-gray-500 py-10">
+                  No data available for this metric.
+                </div>
               )}
             </div>
 
             {/* Pie Chart */}
             <div className="lg:col-span-1 flex flex-col items-center">
-              <h4 className="text-lg font-semibold text-gray-800 mb-4">Status Distribution</h4>
-              <div className="w-full h-80 flex items-center justify-center">
-                {pieData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="80%">
-                    <PieChart>
-                      <Pie
-                        data={pieData}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={70}
-                        labelLine={false}
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {pieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        formatter={(value, name) => [`${value} entries`, name]}
-                        wrapperStyle={{ fontSize: '12px' }}
-                      />
-                      <Legend
-                        verticalAlign="bottom"
-                        align="center"
-                        wrapperStyle={{ fontSize: '12px' }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="text-center text-gray-500 py-10">No data to display.</div>
-                )}
+              <h4 className="text-lg font-semibold text-gray-800 mb-4">
+                Status Distribution
+              </h4>
+              <div className="w-full h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={70}
+                      labelLine={false}
+                      label={({ name, percent }) =>
+                        `${name} ${(percent * 100).toFixed(0)}%`
+                      }
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={COLORS[index % COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value, name) => [`${value} entries`, name]}
+                    />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
             </div>
           </div>
 
           {/* Simple Data Table */}
           <div className="overflow-x-auto mb-6">
-            <h4 className="text-lg font-semibold text-gray-800 mb-3">Historical Data Table</h4>
+            <h4 className="text-lg font-semibold text-gray-800 mb-3">
+              Historical Data Table
+            </h4>
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-100">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {activeView === 'monthly' ? 'Month' : 'Year'}
+                    {activeView === "monthly" ? "Month" : "Year"}
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trend</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Value
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Trend
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {currentData.map((item, index) => {
-                  const healthStatus = getHealthStatus(selectedMetric, item[selectedMetric]);
-                  const trend = index > 0 ? calculateTrend(currentData.slice(index - 1, index + 1), selectedMetric) : { trend: 'stable', percentage: 0 };
+                  const healthStatus = getHealthStatus(
+                    selectedMetric,
+                    item[selectedMetric]
+                  );
+                  const trend =
+                    index > 0
+                      ? calculateTrend(
+                          currentData.slice(index - 1, index + 1),
+                          selectedMetric
+                        )
+                      : { trend: "stable", percentage: 0 };
 
                   return (
                     <tr key={index} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                        {activeView === 'monthly' ? item.month : item.year}
+                        {activeView === "monthly" ? item.month : item.year}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{item[selectedMetric] || '—'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        {item[selectedMetric] || "—"}
+                      </td>
                       <td className="px-4 py-3 text-sm">
                         <div className="flex items-center space-x-2">
                           {getStatusIcon(healthStatus.status)}
                           <span
                             className={`text-xs font-medium ${
-                              healthStatus.status === 'success'
-                                ? 'text-green-700'
-                                : healthStatus.status === 'warning'
-                                ? 'text-yellow-700'
-                                : healthStatus.status === 'danger'
-                                ? 'text-red-700'
-                                : 'text-blue-700'
+                              healthStatus.status === "success"
+                                ? "text-green-700"
+                                : healthStatus.status === "warning"
+                                ? "text-yellow-700"
+                                : healthStatus.status === "danger"
+                                ? "text-red-700"
+                                : "text-blue-700"
                             }`}
                           >
                             {healthStatus.message}
@@ -495,7 +549,10 @@ const PatientComparisonModal = ({ patient, isOpen, onClose }) => {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <TrendIndicator trend={trend.trend} percentage={trend.percentage} />
+                        <TrendIndicator
+                          trend={trend.trend}
+                          percentage={trend.percentage}
+                        />
                       </td>
                     </tr>
                   );
@@ -515,70 +572,91 @@ const PatientComparisonModal = ({ patient, isOpen, onClose }) => {
                 const latestData = currentData[currentData.length - 1];
                 const recommendations = [];
 
-                if (selectedMetric === 'weight' && latestData?.weight) {
-                  const trend = calculateTrend(currentData, 'weight');
-                  if (trend.trend === 'up' && trend.percentage > 5) {
-                    recommendations.push('Monitor weight gain. Consider reviewing diet and exercise routine.');
-                  } else if (trend.trend === 'down' && trend.percentage > 10) {
-                    recommendations.push('Significant weight loss detected. Ensure adequate nutrition and consult if unintentional.');
+                if (selectedMetric === "weight" && latestData?.weight) {
+                  const trend = calculateTrend(currentData, "weight");
+                  if (trend.trend === "up" && trend.percentage > 5) {
+                    recommendations.push(
+                      "Monitor weight gain. Consider reviewing diet and exercise routine."
+                    );
+                  } else if (trend.trend === "down" && trend.percentage > 10) {
+                    recommendations.push(
+                      "Significant weight loss detected. Ensure adequate nutrition and consult if unintentional."
+                    );
                   } else {
-                    recommendations.push('Weight appears stable. Continue current health maintenance routine.');
+                    recommendations.push(
+                      "Weight appears stable. Continue current health maintenance routine."
+                    );
                   }
                 }
 
-                if (selectedMetric === 'bp' && latestData?.bp) {
+                if (selectedMetric === "bp" && latestData?.bp) {
                   const bpMatch = latestData.bp.match(/(\d+)\/(\d+)/);
                   if (bpMatch && parseInt(bpMatch[1]) > 140) {
-                    recommendations.push('Blood pressure is elevated. Monitor regularly and consider lifestyle modifications.');
+                    recommendations.push(
+                      "Blood pressure is elevated. Monitor regularly and consider lifestyle modifications."
+                    );
                   } else {
-                    recommendations.push('Blood pressure is within normal range. Continue monitoring regularly.');
+                    recommendations.push(
+                      "Blood pressure is within normal range. Continue monitoring regularly."
+                    );
                   }
                 }
 
-                if (selectedMetric === 'bmi' && latestData?.bmi) {
+                if (selectedMetric === "bmi" && latestData?.bmi) {
                   const bmi = parseFloat(latestData.bmi);
                   if (bmi > 25) {
-                    recommendations.push('BMI indicates overweight. Consider dietary changes and increased physical activity.');
+                    recommendations.push(
+                      "BMI indicates overweight. Consider dietary changes and increased physical activity."
+                    );
                   } else if (bmi < 18.5) {
-                    recommendations.push('BMI indicates underweight. Consider nutritional assessment and appropriate weight gain strategies.');
+                    recommendations.push(
+                      "BMI indicates underweight. Consider nutritional assessment and appropriate weight gain strategies."
+                    );
                   } else {
-                    recommendations.push('BMI is within normal range. Maintain current lifestyle for optimal health.');
+                    recommendations.push(
+                      "BMI is within normal range. Maintain current lifestyle for optimal health."
+                    );
                   }
                 }
 
-                if (selectedMetric === 'rbs' && latestData?.rbs) {
+                if (selectedMetric === "rbs" && latestData?.rbs) {
                   const rbs = parseFloat(latestData.rbs);
                   if (rbs > 200) {
-                    recommendations.push('Random blood sugar is significantly elevated. Immediate medical consultation recommended.');
+                    recommendations.push(
+                      "Random blood sugar is significantly elevated. Immediate medical consultation recommended."
+                    );
                   } else if (rbs > 140) {
-                    recommendations.push('Random blood sugar is elevated. Monitor closely and consider glucose tolerance testing.');
+                    recommendations.push(
+                      "Random blood sugar is elevated. Monitor closely and consider glucose tolerance testing."
+                    );
                   } else {
-                    recommendations.push('Random blood sugar is within normal range. Continue regular monitoring.');
+                    recommendations.push(
+                      "Random blood sugar is within normal range. Continue regular monitoring."
+                    );
                   }
                 }
 
-                if (selectedMetric === 'fbs' && latestData?.fbs) {
+                if (selectedMetric === "fbs" && latestData?.fbs) {
                   const fbs = parseFloat(latestData.fbs);
                   if (fbs > 126) {
-                    recommendations.push('Fasting blood sugar indicates diabetes. Medical consultation and management plan required.');
+                    recommendations.push(
+                      "Fasting blood sugar indicates diabetes. Medical consultation and management plan required."
+                    );
                   } else if (fbs > 100) {
-                    recommendations.push('Fasting blood sugar indicates prediabetes. Lifestyle modifications recommended.');
+                    recommendations.push(
+                      "Fasting blood sugar indicates prediabetes. Lifestyle modifications recommended."
+                    );
                   } else {
-                    recommendations.push('Fasting blood sugar is normal. Continue healthy lifestyle practices.');
-                  }
-                }
-
-                if (selectedMetric === 'waist' && latestData?.waist) {
-                  const waist = parseFloat(latestData.waist);
-                  if (waist > 94) {
-                    recommendations.push('Waist circumference is elevated, which may increase health risks. Focus on core-strengthening exercises and diet.');
-                  } else {
-                    recommendations.push('Waist circumference is within a healthy range. Continue to maintain a balanced lifestyle.');
+                    recommendations.push(
+                      "Fasting blood sugar is normal. Continue healthy lifestyle practices."
+                    );
                   }
                 }
 
                 if (recommendations.length === 0) {
-                  recommendations.push('Continue current health maintenance routine. Regular monitoring is recommended for optimal health tracking.');
+                  recommendations.push(
+                    "Continue current health maintenance routine. Regular monitoring is recommended for optimal health tracking."
+                  );
                 }
 
                 return recommendations.map((rec, index) => (
@@ -605,5 +683,4 @@ const PatientComparisonModal = ({ patient, isOpen, onClose }) => {
     </div>
   );
 };
-
 export default PatientComparisonModal;
