@@ -1,0 +1,77 @@
+const Staff = require("../models/staffModel");
+
+// Add new staff
+exports.addStaff = (req, res) => {
+  try {
+    const staffData = req.body;
+
+    // Defensive check in case req.body is empty or undefined
+    if (!staffData || Object.keys(staffData).length === 0) {
+      return res.status(400).json({ error: "Invalid request body" });
+    }
+
+    // Create new staff record
+    Staff.create(staffData, (err, result) => {
+      if (err) {
+        console.error("Error inserting staff:", err);
+        return res.status(500).json({ error: err.message });
+      }
+
+      res.status(201).json({
+        message: "Staff added successfully",
+        staffId: staffData.id || result.insertId,
+      });
+    });
+  } catch (error) {
+    console.error("Unexpected error in addStaff:", error);
+    res.status(500).json({ error: "Server error while adding staff" });
+  }
+};
+
+// Get all staff
+exports.getAllStaff = (req, res) => {
+  Staff.getAll((err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(result);
+  });
+};
+// Get staff by ID
+exports.getStaffById = (req, res) => {
+  const { id } = req.params;
+  Staff.getById(id, (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (result.length === 0)
+      return res.status(404).json({ message: "Staff not found" });
+    res.json(result[0]);
+  });
+};
+// Delete staff by ID
+exports.deleteStaffById = (req, res) => {
+  const { id } = req.params;
+  Staff.deleteById(id, (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (result.affectedRows === 0)
+      return res.status(404).json({ message: "Staff not found" });
+    res.json({ message: "Staff deleted successfully" });
+  });
+};
+// Update staff by ID
+exports.updateStaffById = (req, res) => {
+  const { id } = req.params;
+  const staffData = req.body;
+
+  Staff.updateById(id, staffData, (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (result.affectedRows === 0)
+      return res.status(404).json({ message: "Staff not found" });
+
+    res.json({ message: "Staff updated successfully" });
+  });
+};
+// Get count of staff
+exports.getStaffCount = (req, res) => {
+  Staff.getCount((err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ count: result[0].count });
+  });
+};
