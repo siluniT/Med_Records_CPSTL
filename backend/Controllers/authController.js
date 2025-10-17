@@ -95,4 +95,7 @@ async function register(req, res) {
   }
 }
 
-module.exports = { login, register };
+module.exports = {
+  login,
+  register,
+};

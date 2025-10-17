@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import {
   UserCircleIcon,
@@ -16,7 +16,6 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { CheckIcon } from "@heroicons/react/24/solid";
-
 import AppSidebar from "../Components/AppSidebar";
 import AppHeader from "../Components/AppHeader";
 import AppFooter from "../Components/AppFooter";
@@ -346,16 +345,18 @@ const makeCurrentProblemsString = (entries = []) => {
 
 // The main page component for adding a new patient
 function AddNewPatient() {
+  const location = useLocation();
+  const passedPatient = location.state?.patient || {};
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [stepperLayout] = useState("horizontal");
   const [formData, setFormData] = useState({
-    registrationNo: "",
-    name: "",
-    epfNo: "",
-    contactNo: "",
-    gender: "",
-    dateOfBirth: "",
+    registrationNo: passedPatient.registrationNo || "",
+    name: passedPatient.name || "",
+    epfNo: passedPatient.epfNo || "",
+    contactNo: passedPatient.contactNo || "",
+    gender: passedPatient.gender || "",
+    dateOfBirth: passedPatient.dateOfBirth || "",
     age: "",
     height: "",
     weight: "",
@@ -394,6 +395,29 @@ function AddNewPatient() {
   });
   const [errors, setErrors] = useState({});
 
+
+  const handleCancel = () => {
+    setFormData(initialFormData); // Reset to defaults
+    setErrors({});
+    setCurrentStep(1); // return to step 1
+  };
+  //calculate age
+  const calculateAge = (dob) => {
+    if (!dob) return 0;
+    const today = new Date();
+    const birthDate = new Date(dob);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
+      age--;
+    }
+    return age >= 0 ? age : 0;
+  };
+
   // Auto-calculate BMI when height or weight changes
   useEffect(() => {
     if (formData.height && formData.weight) {
@@ -422,25 +446,13 @@ function AddNewPatient() {
       if (type === "checkbox") {
         const targetKey = key || name;
         const currentValues = prevData[targetKey] || [];
-
         updatedData[targetKey] = checked
           ? [...currentValues, value]
           : currentValues.filter((item) => item !== value);
-
-        // Handle date of birth (calculate age)
       } else if (name === "dateOfBirth") {
-        const today = new Date();
-        const birthDate = new Date(value);
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-        if (
-          monthDiff < 0 ||
-          (monthDiff === 0 && today.getDate() < birthDate.getDate())
-        ) {
-          age--;
-        }
+        // Automatically calculate age when user selects a date
         updatedData.dateOfBirth = value;
-        updatedData.age = age >= 0 ? age : 0;
+        updatedData.age = calculateAge(value);
       } else {
         updatedData[name] = value;
       }
@@ -448,11 +460,20 @@ function AddNewPatient() {
       return updatedData;
     });
 
-    // Clear errors dynamically if any field was previously invalid
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
+
+  // Automatically calculate age when DOB is fetched from database
+  useEffect(() => {
+    if (formData.dateOfBirth) {
+      setFormData((prev) => ({
+        ...prev,
+        age: calculateAge(prev.dateOfBirth),
+      }));
+    }
+  }, [formData.dateOfBirth]);
 
   //Reusable checkbox handler
   const handleCheckboxChange = (e, key) => handleChange(e, key);
@@ -653,21 +674,29 @@ function AddNewPatient() {
         dateOfBirth: formData.dateOfBirth,
       };
 
-      console.log("Sending patient data:", basicInfo);
+      console.log("Checking if patient exists:", basicInfo);
 
-      // POST basic info
-      const patientResponse = await axios.post(
-        "http://localhost:5000/patients/add",
-        basicInfo
+      let patientId;
+      let isNewPatient = false;
+      // Check if patient already exists
+      const checkResponse = await axios.get(
+        `http://localhost:5000/patients/check?registrationNo=${formData.registrationNo}`
       );
 
-      console.log("Patient Response:", patientResponse.data);
-
-      //Extract patient ID correctly
-      const patientId = patientResponse.data.patientId;
-      if (!patientId) throw new Error("Failed to get patient ID from response");
-
-      console.log("Extracted Patient ID:", patientId);
+      if (checkResponse.data.exists) {
+        // Patient exists → use existing ID
+        patientId = checkResponse.data.patientId;
+        console.log("Patient already exists. Using ID:", patientId);
+      } else {
+        // Patient does not exist → add new patient
+        const patientResponse = await axios.post(
+          "http://localhost:5000/patients/add",
+          basicInfo
+        );
+        patientId = patientResponse.data.patientId;
+        isNewPatient = true;
+        console.log("New patient added. ID:", patientId);
+      }
 
       // Prepare medical info
       const medicalInfo = {
@@ -704,18 +733,23 @@ function AddNewPatient() {
       console.log("Sending medical info:", medicalInfo);
 
       // POST medical info
-      const medicalResponse = await axios.post(
+      await axios.post(
         `http://localhost:5000/patientmedicalrecords/${patientId}/records`,
         medicalInfo
       );
 
-      console.log("Medical Record Response:", medicalResponse.data);
-
+      // Prepare patient object for ManagePatients
+      const newPatientObj = {
+        ...basicInfo,
+        id: patientId,
+        isNew: isNewPatient,
+      };
       // Success navigation
       navigate("/ManagePatients", {
         state: {
           message: `Patient ${formData.name} and medical records saved successfully!`,
           type: "success",
+          patient: newPatientObj,
         },
       });
 
@@ -782,6 +816,25 @@ function AddNewPatient() {
   };
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const handleView = async (patient) => {
+    try {
+      // If this patient is just added, don't fetch latest medical record
+      if (patient.isNew) {
+        console.log("New patient, skipping latest medical record fetch.");
+        setMedicalRecord(null); // or empty object
+        return;
+      }
+
+      // Otherwise, fetch latest medical record
+      const { data } = await axios.get(
+        `http://localhost:5000/patientmedicalrecords/${patient.id}/latest`
+      );
+      setMedicalRecord(data);
+    } catch (error) {
+      console.error("No medical record or failed to fetch:", error);
+      setMedicalRecord(null);
+    }
+  };
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -1079,6 +1132,7 @@ function AddNewPatient() {
                           {errors.gender}
                         </p>
                       )}
+                      
                     </div>
                   </div>
                 )}
@@ -1870,71 +1924,94 @@ function AddNewPatient() {
               </div>
 
               {/* Navigation Buttons */}
-              <div className="mt-8 flex justify-between items-center">
-                {/* Previous Button */}
-                <button
-                  type="button"
-                  onClick={handlePrevStep}
-                  disabled={currentStep === 1}
-                  className={`px-6 py-2 rounded-md font-medium transition-all duration-200 flex items-center ${
-                    currentStep === 1
-                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                      : "bg-white border border-red-500 text-red-500 hover:bg-red-50"
-                  }`}
-                >
-                  <svg
-                    className="w-4 h-4 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 19l-7-7 7-7"
-                    />
-                  </svg>
-                  Previous
-                </button>
+              <div className="mt-8 flex justify-between items-center w-full relative">
+  {/* Previous Button (Left) */}
+  <button
+    type="button"
+    onClick={handlePrevStep}
+    disabled={currentStep === 1}
+    className={`px-6 py-2 rounded-md font-medium transition-all duration-200 flex items-center ${
+      currentStep === 1
+        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+        : "bg-white border border-red-500 text-red-500 hover:bg-red-50"
+    }`}
+  >
+    <svg
+      className="w-4 h-4 mr-2"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M15 19l-7-7 7-7"
+      />
+    </svg>
+    Previous
+  </button>
 
-                {/* Step Indicator */}
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-600">
-                    Step {currentStep} of {STEPS.length}
-                  </span>
-                </div>
+  {/* Step Indicator (Centered) */}
+  <span className="absolute left-1/2 transform -translate-x-1/2 text-sm text-gray-600">
+    Step {currentStep} of {STEPS.length}
+  </span>
 
-                {/* Next / Submit Button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (currentStep === STEPS.length) {
-                      handleSubmit();
-                    } else {
-                      handleNextStep();
-                    }
-                  }}
-                  className="px-6 py-2 bg-red-500 text-white rounded-md font-medium hover:bg-red-600 transition-colors duration-200 flex items-center shadow-lg"
-                >
-                  {currentStep === STEPS.length ? "Submit" : "Next"}
-                  {currentStep !== STEPS.length && (
-                    <svg
-                      className="w-4 h-4 ml-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  )}
-                </button>
-              </div>
+  {/* Right-side Buttons (Cancel + Next) */}
+  <div className="flex items-center space-x-10">
+    {/* Cancel Button */}
+    <button
+      type="button"
+      onClick={handleCancel}
+      className="px-6 py-2 bg-red-400 text-white rounded-md font-medium hover:bg-red-500 transition-colors duration-200 flex items-center shadow-lg"
+    >
+      <svg
+        className="w-4 h-4 mr-2"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M6 18L18 6M6 6l12 12"
+        />
+      </svg>
+      Cancel
+    </button>
+
+    {/* Next / Submit Button */}
+    <button
+      type="button"
+      onClick={() => {
+        if (currentStep === STEPS.length) {
+          handleSubmit();
+        } else {
+          handleNextStep();
+        }
+      }}
+      className="px-6 py-2 bg-red-500 text-white rounded-md font-medium hover:bg-red-600 transition-colors duration-200 flex items-center shadow-lg"
+    >
+      {currentStep === STEPS.length ? "Submit" : "Next"}
+      {currentStep !== STEPS.length && (
+        <svg
+          className="w-4 h-4 ml-2"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 5l7 7-7 7"
+          />
+        </svg>
+      )}
+    </button>
+  </div>
+</div>
             </form>
           </div>
         </div>

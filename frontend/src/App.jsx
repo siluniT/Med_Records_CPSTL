@@ -8,6 +8,7 @@ import Dashboard from "./Pages/Dashboard";
 import ManagePatients from "./Pages/ManagePatients";
 import ManageStaff from "./Pages/ManageStaff";
 import AddStaff from "./Pages/AddStaff";
+import RegisterPatient from "./Pages/RegisterPatient";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <Route path="/ManagePatients" element={<ManagePatients />} />
           <Route path="/ManageStaff" element={<ManageStaff />} />
           <Route path="/AddStaff" element={<AddStaff />} />
+          <Route path="/RegisterPatient" element={<RegisterPatient />} />
         </Routes>
       </div>
     </Router>

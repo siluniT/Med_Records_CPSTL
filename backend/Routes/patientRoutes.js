@@ -1,4 +1,5 @@
 const express = require("express");
+const db = require("../db")
 const router = express.Router();
 const {
   createPatient,
@@ -6,7 +7,9 @@ const {
   getPatientById,
   deletePatient,
   getPatientCount,
+  checkPatient
 } = require("../Controllers/patientController");
+
 
 // Add new patient
 router.post("/add", createPatient);
@@ -17,10 +20,15 @@ router.get("/", getAllPatients);
 // Get patient count
 router.get("/count", getPatientCount);
 
+// Check if patient exists
+router.get("/check",checkPatient);
+
 // Get patient by id
 router.get("/:id", getPatientById);
 
 // Delete patient
 router.delete("/delete/:id", deletePatient);
+
+
 
 module.exports = router;

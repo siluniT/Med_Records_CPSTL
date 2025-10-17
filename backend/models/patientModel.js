@@ -63,10 +63,32 @@ const getPatientCount = (callback) => {
   db.query(sql, callback);
 };
 
+// Check if patient exists
+const checkPatient = (req, res) => {
+  const { registrationNo } = req.query;
+
+  if (!registrationNo) {
+    return res.status(400).json({ message: "registrationNo is required" });
+  }
+
+  patientModel.checkPatientByRegistrationNo(registrationNo, (err, results) => {
+    if (err) {
+      console.error("Error checking patient:", err);
+      return res.status(500).json({ message: "Server error" });
+    }
+
+    if (results.length > 0) {
+      return res.json({ exists: true, patientId: results[0].id });
+    } else {
+      return res.json({ exists: false });
+    }
+  });
+};
 module.exports = {
   addPatient,
   getPatients,
   getPatientById,
   deletePatient,
   getPatientCount,
+  checkPatient,
 };

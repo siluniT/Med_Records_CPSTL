@@ -97,7 +97,7 @@ const PatientComparisonModal = ({ patient, isOpen, onClose }) => {
     switch (metric) {
       case "weight":
         variation = monthsAgo * 0.5 + randomFactor * 5;
-        break;
+        break;  
       case "bmi":
         variation = monthsAgo * 0.2 + randomFactor * 2;
         break;

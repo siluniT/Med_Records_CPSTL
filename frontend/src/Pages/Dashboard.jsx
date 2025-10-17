@@ -1,7 +1,9 @@
 // src/Pages/Dashboard.jsx
 import React, { useMemo, useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+
 import axios from "axios";
-import { Link } from "react-router-dom";
+
 import {
   BuildingOffice2Icon,
   UserGroupIcon,
@@ -16,6 +18,8 @@ import {
 import AppSidebar from "../Components/AppSidebar";
 import AppHeader from "../Components/AppHeader";
 import AppFooter from "../Components/AppFooter";
+import RegisterPatient from "./RegisterPatient";
+import EditPatientModal from "../Components/EditPatientModal";
 
 // Small stat card
 const StatCard = ({ icon, title, value, sub }) => {
@@ -131,6 +135,7 @@ const LineChartCard = () => {
     const padY = 24;
     const innerW = w - padX * 2;
     const innerH = h - padY * 2;
+    
 
     const maxY = Math.max(...counts) * 1.1 || 1;
     const stepX = innerW / (counts.length - 1 || 1);
@@ -140,8 +145,8 @@ const LineChartCard = () => {
       const y = padY + (innerH - (val / maxY) * innerH);
       return { x, y, val };
     });
-    
 
+  
     const d = pts
       .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x},${p.y}`)
       .join(" ");
@@ -238,57 +243,134 @@ const LineChartCard = () => {
 };
 
 const DoctorsListCard = () => {
-  const patients = [
-    { name: "Smith Wright", role: "Clinical Doctor", status: "Admitted" },
-    { name: "Emily Stone", role: "Cardiologist", status: "In-progress" },
-    { name: "David Kim", role: "Pediatrician", status: "In-progress" },
-    { name: "Sara Jones", role: "Radiologist", status: " Admitted" },
+  const [patients, setPatients] = useState([]);
+  const [staff, setStaff] = useState([]);
+  const [searchEPF, setSearchEPF] = useState("");
+  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchPatientsAndStaff = async () => {
+      try {
+        const [patientsRes, staffRes] = await Promise.all([
+          axios.get("http://localhost:5000/patients"),
+          axios.get("http://localhost:5000/staff"),
+        ]);
+        setPatients(patientsRes.data || []);
+        setStaff(staffRes.data || []);
+      } catch (err) {
+        console.error("Error fetching patients or staff:", err);
+      }
+    };
+    fetchPatientsAndStaff();
+  }, []);
+
+  const combinedList = [
+    ...patients.map((p) => ({
+      ...p,
+      epf: p.epfNo,
+      type: "Patient",
+    })),
+    ...staff.map((s) => ({
+      ...s,
+      epf: s.epfNumber,
+      type: "Staff",
+    })),
   ];
 
-  const statusColor = (s) =>
-    s === "Available"
-      ? "bg-emerald-50 text-emerald-700"
-      : s === "On Duty"
-      ? "bg-blue-50 text-blue-700"
-      : "bg-gray-100 text-gray-600";
+  const filteredList = combinedList.filter((item) =>
+    item.epf?.toLowerCase().includes(searchEPF.toLowerCase())
+  );
+
+  const handleProgressClick = async (patient) => {
+    try {
+      const res = await axios.get(
+        `http://localhost:5000/patientmedicalrecords/count/${patient.id}`
+      );
+
+      const recordCount = res.data.count;
+
+      if (recordCount === 0) {
+        // New patient (no medical record yet)
+        navigate("/AddNewPatient", { state: { patient } });
+      } else {
+        //Existing patient (has at least one record)
+        setSelectedPatient(patient);
+        setShowEditModal(true);
+      }
+    } catch (err) {
+      console.error("Error checking medical record count:", err);
+    }
+  };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden w-full h-[400px]">
+      {/* HEADER */}
       <div className="px-5 py-4 bg-red-500 text-white">
         <div className="text-base font-semibold">Patients List</div>
         <div className="text-xs text-red-100">
-          Quick overview of current patients
+          Quick overview of all registered users
         </div>
       </div>
-      <div className="divide-y divide-gray-100">
-        {patients.map((patient, i) => (
-          <div key={i} className="px-5 py-4 flex items-center">
-            <div className="mr-3">
-              <div className="w-10 h-10 rounded-full bg-red-100 text-red-700 flex items-center justify-center font-semibold">
-                {patient.name.charAt(0)}
-              </div>
-            </div>
-            <div className="flex-1">
-              <div className="text-sm font-medium text-gray-800">
-                {patient.name}
-              </div>
-              <div className="text-xs text-gray-500">{patient.condition}</div>
-            </div>
-            <span
-              className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusColor(
-                patient.status
-              )}`}
-            >
-              {patient.status}
-            </span>
+
+      {/* SEARCH */}
+      <div className="px-5 py-3 border-b border-gray-100">
+        <input
+          type="text"
+          placeholder="Search by EPF No"
+          value={searchEPF}
+          onChange={(e) => setSearchEPF(e.target.value)}
+          className="w-full text-sm px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"
+        />
+      </div>
+
+      {/* LIST */}
+      
+      <div className="divide-y divide-gray-100 overflow-y-auto h-[300px]">
+        {filteredList.length === 0 ? (
+          <div className="text-center text-gray-500 text-sm py-10">
+            No patients found
           </div>
-        ))}
+        ) : (
+          filteredList.map((item, i) => (
+            <div
+              key={i}
+              className="px-5 py-3 flex items-center justify-between"
+            >
+              <div className="flex items-center">
+                <div className="mr-3">
+                  <div className="w-10 h-10 rounded-full bg-red-100 text-red-700 flex items-center justify-center font-semibold">
+                    {item.name?.charAt(0) || "?"}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-gray-800">
+                    {item.name}
+                  </div>
+                  <div className="text-xs text-gray-500">{item.epfNo}</div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => handleProgressClick(item)}
+                className="text-xs font-medium text-red-600 hover:text-red-700 border border-red-200 px-2 py-1 rounded-md"
+              >
+                Progress
+              </button>
+            </div>
+          ))
+        )}
       </div>
-      <div className="px-5 py-3 bg-gray-50 text-right">
-        <button className="text-xs font-medium text-red-600 hover:text-red-700">
-          View all
-        </button>
-      </div>
+
+      {/* Edit Modal */}
+      {showEditModal && selectedPatient && (
+        <EditPatientModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          patient={selectedPatient}
+        />
+      )}
     </div>
   );
 };
@@ -302,6 +384,7 @@ function Dashboard() {
   const [error, setError] = useState(null);
   const [staffCount, setStaffCount] = useState(0);
   const [todayCount, setTodayCount] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchCount = async () => {
@@ -363,13 +446,28 @@ function Dashboard() {
           <div className="mb-4 flex items-center justify-between">
             <h1 className="text-2xl font-semibold text-gray-800">Dashboard</h1>
             {/* The Link component handles navigation without a full page reload */}
-            <Link
-              to="/AddNewPatient"
-              className="bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-red-700 transition flex items-center"
-            >
-              <UserPlusIcon className="w-5 h-5 mr-2" />
-              Add Patient
-            </Link>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-red-700 transition flex items-center"
+              >
+                <UserPlusIcon className="w-5 h-5 mr-2" />
+                Register Patient
+              </button>
+
+              {/* Modal (RegisterPatient.jsx) */}
+              {isModalOpen && (
+                <RegisterPatient onClose={() => setIsModalOpen(false)} />
+              )}
+
+              <Link
+                to="/AddNewPatient"
+                className="bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-red-700 transition flex items-center"
+              >
+                <UserPlusIcon className="w-5 h-5 mr-2" />
+                Add Patient
+              </Link>
+            </div>
           </div>
 
           {/* Top row: Promo + Stats */}

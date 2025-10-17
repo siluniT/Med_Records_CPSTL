@@ -1,4 +1,5 @@
 const express = require("express");
+const db = require("../db")
 const router = express.Router();
 const {
   addMedicalRecord,
@@ -28,10 +29,6 @@ router.get("/records", getMedicalRecords);
 // Add new patient
 router.post("/:patientId/records", addMedicalRecord);
 
-
-
-
-
 // Get patient by ID all medical records
 router.get("/:id/records", getMedicalRecordsByPatientId);
 
@@ -48,6 +45,17 @@ router.get("/:patientId/monthly", getPatientMonthlyMetrics);
 router.get("/:patientId/yearly", getPatientYearlyMetrics);
 
 
+router.get("/count/:patientId", (req, res) => {
+  const { patientId } = req.params;
+  const sql = "SELECT COUNT(*) AS count FROM patientmedicalrecords WHERE patient_id = ?";
+  db.query(sql, [patientId], (err, result) => {
+    if (err) {
+      console.error("Error fetching record count:", err);
+      return res.status(500).json({ success: false, error: "Database error" });
+    }
+    res.json({ success: true, count: result[0].count });
+  });
+});
 
 module.exports = router;
                                

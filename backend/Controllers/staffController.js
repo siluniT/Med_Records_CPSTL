@@ -1,7 +1,7 @@
 const Staff = require("../models/staffModel");
 
 // Add new staff
-exports.addStaff = (req, res) => {
+const addStaff = (req, res) => {
   try {
     const staffData = req.body;
 
@@ -29,14 +29,14 @@ exports.addStaff = (req, res) => {
 };
 
 // Get all staff
-exports.getAllStaff = (req, res) => {
+const getAllStaff = (req, res) => {
   Staff.getAll((err, result) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(result);
   });
 };
 // Get staff by ID
-exports.getStaffById = (req, res) => {
+const getStaffById = (req, res) => {
   const { id } = req.params;
   Staff.getById(id, (err, result) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -46,7 +46,7 @@ exports.getStaffById = (req, res) => {
   });
 };
 // Delete staff by ID
-exports.deleteStaffById = (req, res) => {
+const deleteStaffById = (req, res) => {
   const { id } = req.params;
   Staff.deleteById(id, (err, result) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -56,7 +56,7 @@ exports.deleteStaffById = (req, res) => {
   });
 };
 // Update staff by ID
-exports.updateStaffById = (req, res) => {
+const updateStaffById = (req, res) => {
   const { id } = req.params;
   const staffData = req.body;
 
@@ -69,9 +69,18 @@ exports.updateStaffById = (req, res) => {
   });
 };
 // Get count of staff
-exports.getStaffCount = (req, res) => {
+const getStaffCount = (req, res) => {
   Staff.getCount((err, result) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ count: result[0].count });
   });
+};
+
+module.exports = {
+  addStaff,
+  getAllStaff,
+  getStaffById,
+  deleteStaffById,
+  updateStaffById,
+  getStaffCount,
 };

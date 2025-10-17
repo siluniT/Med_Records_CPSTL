@@ -21,19 +21,16 @@ const ViewPatientModal = ({ patient, isOpen, onClose }) => {
   if (!isOpen || !patient) return null;
 
   const calculateAge = (dob) => {
-    if (!dob) return "";
-    const birthDate = new Date(dob);
-    if (isNaN(birthDate.getTime())) return "";
+    if (!dob) return 0;
     const today = new Date();
+    const birthDate = new Date(dob);
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < birthDate.getDate())
-    ) {
+  
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
       age--;
     }
-    return age;
+    return age >= 0 ? age : 0;
   };
 
   // Normalize JSON/array/string to array
@@ -56,6 +53,17 @@ const ViewPatientModal = ({ patient, isOpen, onClose }) => {
   // PDF Export (red & white style)
   const exportToPDF = async () => {
     try {
+      const patientId = patient.patient_id; 
+      if (!patientId) {
+        alert("Patient ID not found.");
+        return;
+      }
+  
+      const latestRecordRes = await axios.get(
+        `http://localhost:5000/patientmedicalrecords/${patientId}/latest`
+      );
+      const latestRecord = latestRecordRes.data.latestRecord;
+
       const printWindow = window.open("", "_blank");
       if (!printWindow) {
         alert("Please allow pop-ups to export PDF");
@@ -364,6 +372,9 @@ setTimeout(function(){ window.close(); }, 300);
 
       printWindow.document.write(htmlContent);
       printWindow.document.close();
+      setTimeout(() => {
+        alert("PDF generated successfully!");
+      }, 500); 
     } catch (error) {
       console.error("Error generating PDF:", error);
       alert("Error generating PDF. Please try again.");

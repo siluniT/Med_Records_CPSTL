@@ -19,6 +19,22 @@ const familyRelations = ["Father", "Mother", "Siblings"];
 const EditPatientModal = ({ patient, isOpen, onClose, onSave }) => {
   const [editedPatient, setEditedPatient] = useState({});
 
+// Helper to calculate BMI
+const calculateBMI = (height, weight) => {
+  if (!height || !weight) return "";
+  const heightInMeters = height / 100; // Convert cm to meters
+  const bmi = weight / (heightInMeters * heightInMeters);
+  return bmi ? bmi.toFixed(2) : "";
+};
+
+  useEffect(() => {
+    if (editedPatient.height && editedPatient.weight) {
+      const newBMI = calculateBMI(editedPatient.height, editedPatient.weight);
+      setEditedPatient((prev) => ({ ...prev, bmi: newBMI }));
+    }
+  }, [editedPatient.height, editedPatient.weight]);
+
+  
   // Initialize patient info
   useEffect(() => {
     if (patient) {
@@ -339,13 +355,23 @@ const EditPatientModal = ({ patient, isOpen, onClose, onSave }) => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     {field.toUpperCase()}
                   </label>
-                  <input
-                    type="number"
-                    step={field === "bmi" ? "0.1" : "1"}
-                    value={editedPatient[field] || ""}
-                    onChange={(e) => handleInputChange(field, e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  />
+                  {field === "bmi" ? (
+  <input
+    type="number"
+    step="0.1"
+    value={editedPatient.bmi || ""}
+    readOnly
+    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
+  />
+) : (
+  <input
+    type="number"
+    step={field === "bmi" ? "0.1" : "1"}
+    value={editedPatient[field] || ""}
+    onChange={(e) => handleInputChange(field, e.target.value)}
+    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+  />
+)}
                 </div>
               ))}
             </div>
