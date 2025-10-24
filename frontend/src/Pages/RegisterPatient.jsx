@@ -7,6 +7,7 @@ function RegisterPatient({ onClose }) {
     registrationNo: "",
     name: "",
     epfNo: "",
+    department: "",
     contactNo: "",
     gender: "",
     dateOfBirth: "",
@@ -15,17 +16,66 @@ function RegisterPatient({ onClose }) {
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState("");
 
+  // List of department options
+  const departments = [
+    "ANURADHAPURA HOLIDAY",
+    "AUTO MOBILE",
+    "BULK MOVE. & BULK PR",
+    "DGM(ENG & SS)",
+    "DGM(FINANCE)",
+    "DGM(HR & ADMIN)",
+    "DGM(O)",
+    "DISTRIBUTION",
+    "ENGINEERING - DEVE.",
+    "FIRE & SAFETY",
+    "FINANCE",
+    "INFORMATION SYSTEMS",
+    "INTERNAL AUDIT",
+    "INVESTIGATION",
+    "IRD VAUNIYA",
+    "KANDY  HOLIDAY HOME",
+    "KATARAGAMA HOLIDAY",
+    "KKS",
+    "LEGAL",
+    "LBD ANURADHAPURA",
+    "LBD BADULLA",
+    "LBD BATTICALOA",
+    "LBD GALLE",
+    "LBD HAPUTALE",
+    "LBD KOTAGALA",
+    "LBD KURUNEGELA",
+    "LBD MATARA",
+    "LBD PERADENIYA",
+    "LBD SARASAVI  UYANA",
+    "MAIN LABORATORY",
+    "MEDICAL CENTER",
+    "MUTHURAJWELA TERM",
+    "NUWARAELIYA HOLIDAY",
+    "OIL FACILITIES - OFF",
+    "PERSONNEL",
+    "PREMISES & ENGG. SER",
+    "PROCUREMENT",
+    "SECRETARIAT",
+    "SECURITY",
+    "STORES",
+    "TRAINING",
+  ];
+  departments.sort((a, b) => a.localeCompare(b)); 
+  
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
     if (errors[name]) setErrors({ ...errors, [name]: "" });
   };
 
+  // Validate form
   const validate = () => {
     const newErrors = {};
     if (!formData.registrationNo) newErrors.registrationNo = "Registration No. is required";
     if (!formData.name) newErrors.name = "Name is required";
     if (!formData.epfNo) newErrors.epfNo = "EPF No. is required";
+    if (!formData.department) newErrors.department = "Department is required";
     if (!formData.contactNo) newErrors.contactNo = "Contact No. is required";
     if (!formData.gender) newErrors.gender = "Gender is required";
     if (!formData.dateOfBirth) newErrors.dateOfBirth = "Date of Birth is required";
@@ -44,6 +94,7 @@ function RegisterPatient({ onClose }) {
         registrationNo: "",
         name: "",
         epfNo: "",
+        department: "",
         contactNo: "",
         gender: "",
         dateOfBirth: "",
@@ -140,6 +191,34 @@ function RegisterPatient({ onClose }) {
               </p>
             )}
           </div>
+
+          {/* Department */} 
+<div>
+  <label className="block text-sm font-medium text-gray-700">
+    Department <span className="text-red-500">*</span>
+  </label>
+  <select
+    name="department"
+    value={formData.department}
+    onChange={handleChange}
+    className={`mt-1 block w-full p-2 border rounded-md ${
+      errors.department ? "border-red-500 bg-red-50" : "border-gray-300"
+    }`}
+  >
+    <option value="">-- Select Department --</option>
+    {departments.map((dept, index) => (
+      <option key={index} value={dept}>
+        {dept}
+      </option>
+    ))}
+  </select>
+  {errors.department && (
+    <p className="text-xs text-red-500 mt-1 flex items-center">
+      <ExclamationCircleIcon className="w-3 h-3 mr-1" />
+      {errors.department}
+    </p>
+  )}
+</div>
 
           {/* Contact No */}
           <div>

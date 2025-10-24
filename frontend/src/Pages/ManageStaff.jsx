@@ -215,12 +215,12 @@ function ManageStaff() {
         lastUpdated: new Date().toISOString(),
       };
     });
-    setStaff(updated);
     localStorage.setItem("staff", JSON.stringify(updated));
   };
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
   const closeSidebar = () => setIsSidebarOpen(false);
+
 
   const designations = [
     "Doctor",
@@ -299,7 +299,7 @@ function ManageStaff() {
                       </option>
                     ))}
                   </select>
-
+              
                   <select
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}

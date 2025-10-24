@@ -75,6 +75,7 @@ const checkPatient = (req, res) => {
     }
   });
 };
+
 module.exports = {
   createPatient,
   getAllPatients,

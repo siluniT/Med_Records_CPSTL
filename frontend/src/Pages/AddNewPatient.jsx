@@ -396,11 +396,55 @@ function AddNewPatient() {
   const [errors, setErrors] = useState({});
 
 
-  const handleCancel = () => {
-    setFormData(initialFormData); // Reset to defaults
+//Clear form data
+  const clearForm = () => {
+    setFormData({
+      registrationNo: "",
+      name: "",
+      epfNo: "",
+      contactNo: "",
+      gender: "",
+      dateOfBirth: "",
+      age: "",
+      height: "",
+      weight: "",
+      bmi: "",
+      waist: "",
+      rbs: "",
+      fbs: "",
+      bp: "",
+      visionLeft: "",
+      visionRight: "",
+      patientHistory: [],
+      familyHistoryFather: [],
+      familyHistoryMother: [],
+      familyHistorySiblings: [],
+      otherPatientConditions: "",
+      otherFatherConditions: "",
+      otherMotherConditions: "",
+      otherSiblingsConditions: "",
+      alcoholConsumption: "",
+      smokingHabits: "",
+      currentProblems: "",
+      currentProblemsEntries: [
+        {
+          selected: [],
+          details: "",
+          customOptions: [],
+          addingCustom: false,
+          newCustomLabel: "",
+        },
+      ],
+      breastExamination: "Not Done",
+      papSmear: "Not Done",
+      treatmentPlan: "",
+      smokingCessationAdvice: "",
+      alcoholAbuseAdvice: "",
+    });
     setErrors({});
-    setCurrentStep(1); // return to step 1
+    setCurrentStep(1); 
   };
+  
   //calculate age
   const calculateAge = (dob) => {
     if (!dob) return 0;
@@ -1961,25 +2005,25 @@ function AddNewPatient() {
   <div className="flex items-center space-x-10">
     {/* Cancel Button */}
     <button
-      type="button"
-      onClick={handleCancel}
-      className="px-6 py-2 bg-red-400 text-white rounded-md font-medium hover:bg-red-500 transition-colors duration-200 flex items-center shadow-lg"
-    >
-      <svg
-        className="w-4 h-4 mr-2"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M6 18L18 6M6 6l12 12"
-        />
-      </svg>
-      Cancel
-    </button>
+  type="button"
+  onClick={clearForm}
+  className="px-6 py-2 bg-red-400 text-white rounded-md font-medium hover:bg-red-500 transition-colors duration-200 flex items-center shadow-lg"
+>
+  <svg
+    className="w-4 h-4 mr-2"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M6 18L18 6M6 6l12 12"
+    />
+  </svg>
+  Cancel
+</button>
 
     {/* Next / Submit Button */}
     <button

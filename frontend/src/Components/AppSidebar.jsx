@@ -6,7 +6,6 @@ const AppSidebar = ({ isSidebarOpen, onCloseSidebar, currentPage }) => {
   // Retrieve user data from localStorage
   const storeData = localStorage.getItem("userData");
   const userData = storeData ? JSON.parse(storeData) : null;
-
   const userName = userData?.name || "User";
 
   return (
