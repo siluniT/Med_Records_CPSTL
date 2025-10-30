@@ -479,8 +479,10 @@ function AddNewPatient() {
     }
   }, [formData.height, formData.weight]);
 
-  //handle checkbox change
+  
 
+  //handle checkbox change
+/* 
   const handleChange = (e, key = null) => {
     const { name, value, checked, type } = e.target;
 
@@ -507,7 +509,7 @@ function AddNewPatient() {
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
-  };
+  }; */
 
   // Automatically calculate age when DOB is fetched from database
   useEffect(() => {
@@ -518,6 +520,82 @@ function AddNewPatient() {
       }));
     }
   }, [formData.dateOfBirth]);
+
+  // Handle field changes and auto-update dependent fields
+  const handleChange = (e, key = null) => {
+    const { name, value, checked, type } = e.target;
+  
+    setFormData((prevData) => {
+      let updatedData = { ...prevData };
+  
+      // Checkbox handler
+      if (type === "checkbox") {
+        const targetKey = key || name;
+        const currentValues = prevData[targetKey] || [];
+        updatedData[targetKey] = checked
+          ? [...currentValues, value]
+          : currentValues.filter((item) => item !== value);
+      } 
+      // Date of Birth → Auto-calculate age
+      else if (name === "dateOfBirth") {
+        updatedData.dateOfBirth = value;
+        updatedData.age = calculateAge(value);
+      } 
+      // Weight or Height → Auto-calculate BMI + BMI Category
+      else if (name === "weight" || name === "height") {
+        updatedData[name] = value;
+      
+        const height = parseFloat(
+          name === "height" ? value : prevData.height
+        );
+        const weight = parseFloat(
+          name === "weight" ? value : prevData.weight
+        );
+      
+        if (height > 0 && weight > 0) {
+          const heightInMeters = height / 100;
+          const bmiValue = weight / (heightInMeters * heightInMeters);
+          const bmi = bmiValue.toFixed(1);
+      
+          let bmiCategory = "";
+          if (bmiValue < 18.5) bmiCategory = "Underweight";
+          else if (bmiValue < 25) bmiCategory = "Normal";
+          else if (bmiValue < 30) bmiCategory = "Overweight";
+          else if (bmiValue < 35) bmiCategory = "Obesity Class I";
+          else if (bmiValue < 40) bmiCategory = "Obesity Class II";
+          else bmiCategory = "Obesity Class III";
+      
+          updatedData.bmi = bmi;
+          updatedData.bmiCategory = bmiCategory;
+        } else {
+          updatedData.bmi = "";
+          updatedData.bmiCategory = "";
+        }
+      }
+       
+      // Default field update
+      else {
+        updatedData[name] = value;
+      }
+  
+      return updatedData;
+    });
+  
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+  const CURRENT_PROBLEM_OPTIONS = [
+    "Underweight",
+    "Normal BMI",
+    "Overweight",
+    "Obesity Class 1",
+    "Obesity Class 2",
+    "Obesity Class 3",
+    
+  ];
+  
+
 
   //Reusable checkbox handler
   const handleCheckboxChange = (e, key) => handleChange(e, key);
@@ -886,6 +964,17 @@ function AddNewPatient() {
 
   const closeSidebar = () => {
     setIsSidebarOpen(false);
+  };
+
+  const getWaistCategory = (waist, gender) => {
+    if (!waist || !gender) return "";
+  
+    if (gender === "Male") {
+      return waist >= 90 ? "Abdominal Obesity" : "Normal";
+    } else if (gender === "Female") {
+      return waist >= 80 ? "Abdominal Obesity" : "Normal";
+    }
+    return "";
   };
 
   const commonMedicalConditions = ["DM", "HTN", "CHOL", "IHD", "CA"];
@@ -1257,7 +1346,7 @@ function AddNewPatient() {
                             BMI <span className="text-red-500">*</span>
                           </label>
                           <input
-                            type="number"
+                            type="text"
                             id="bmi"
                             name="bmi"
                             value={formData.bmi}
@@ -1637,148 +1726,127 @@ function AddNewPatient() {
                   </div>
                 )}
 
-                {/* Step 5: Current Problems (UPDATED with inline + on Issues) */}
-                {currentStep === 5 && (
-                  <div>
-                    <h1 className="text-xl font-semibold text-gray-800 mb-4 flex items-center bg-red-50 p-3 rounded-lg border border-red-200">
-                      <ExclamationCircleIcon className="w-6 h-6 mr-2 text-red-500" />
-                      Current Problems
-                    </h1>
+               {/* Step 5: Current Problems (Auto from BMI) */}
+{currentStep === 5 && (
+  <div>
+    <h1 className="text-xl font-semibold text-gray-800 mb-4 flex items-center bg-red-50 p-3 rounded-lg border border-red-200">
+      <ExclamationCircleIcon className="w-6 h-6 mr-2 text-red-500" />
+      Current Problems
+    </h1>
 
-                    <div className="space-y-4">
-                      {formData.currentProblemsEntries.map((entry, idx) => {
-                        const options = [
-                          ...CURRENT_PROBLEM_OPTIONS,
-                          ...(entry.customOptions || []),
-                        ];
-                        return (
-                          <div
-                            key={idx}
-                            className="relative border border-red-200 bg-red-50 rounded-lg p-4"
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-medium text-gray-700">
-                                Issues
-                              </span>
-                              <div className="flex items-center gap-1">
-                                {/* Inline add custom issue */}
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleStartAddCustomOption(idx)
-                                  }
-                                  className="inline-flex items-center text-red-600 hover:text-red-700 px-2 py-1 rounded"
-                                  title="Add custom issue"
-                                >
-                                  <PlusIcon className="w-5 h-5" />
-                                </button>
-                                {formData.currentProblemsEntries.length > 1 && (
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      handleRemoveProblemSection(idx)
-                                    }
-                                    className="inline-flex items-center text-red-600 hover:text-red-700 px-2 py-1 rounded"
-                                    title="Remove this set"
-                                  >
-                                    <TrashIcon className="w-5 h-5" />
-                                  </button>
-                                )}
-                              </div>
-                            </div>
+    <div className="space-y-4">
+      {formData.currentProblemsEntries.map((entry, idx) => {
+        // Only show BMI-based issue (if BMI exists)
+        const bmiCategory = formData.bmiCategory || "";
 
-                            {entry.addingCustom && (
-                              <div className="mt-1 mb-2 flex items-center gap-2">
-                                <input
-                                  type="text"
-                                  value={entry.newCustomLabel || ""}
-                                  onChange={(e) =>
-                                    handleCustomOptionInputChange(
-                                      idx,
-                                      e.target.value
-                                    )
-                                  }
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter") {
-                                      e.preventDefault();
-                                      handleConfirmAddCustomOption(idx);
-                                    }
-                                  }}
-                                  className="flex-1 border rounded-md p-1 text-sm focus:ring-2 focus:ring-red-500 border-gray-300 bg-white"
-                                  placeholder="Enter custom issue label"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleConfirmAddCustomOption(idx)
-                                  }
-                                  className="inline-flex items-center justify-center px-2 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
-                                  title="Add"
-                                >
-                                  <CheckIcon className="w-4 h-4" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleCancelAddCustomOption(idx)
-                                  }
-                                  className="inline-flex items-center justify-center px-2 py-2 text-gray-600 hover:text-gray-800"
-                                  title="Cancel"
-                                >
-                                  <XMarkIcon className="w-4 h-4" />
-                                </button>
-                              </div>
-                            )}
+          //Compute waist category based on gender
+          const waistCategory = getWaistCategory(formData.waist, formData.gender);
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-                              {options.map((opt) => (
-                                <label
-                                  key={opt}
-                                  className="flex items-center bg-white rounded-md border border-red-200 px-3 py-2 shadow-sm"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={entry.selected.includes(opt)}
-                                    onChange={() =>
-                                      handleToggleProblem(idx, opt)
-                                    }
-                                    className="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
-                                  />
-                                  <span className="ml-2 text-xs text-gray-800">
-                                    {opt}
-                                  </span>
-                                </label>
-                              ))}
-                            </div>
+        // Automatically tick that issue
+        const relevantIssues =
+          bmiCategory !== "" ? [bmiCategory] : entry.selected;
 
-                            <div className="mt-3">
-                              <label className="block text-xs font-medium text-gray-700">
-                                Additional details
-                              </label>
-                              <textarea
-                                rows={3}
-                                value={entry.details}
-                                onChange={(e) =>
-                                  handleEntryDetailsChange(idx, e.target.value)
-                                }
-                                className="mt-1 block w-full border rounded-md shadow-sm p-1 text-sm border-gray-300 focus:ring-2 focus:ring-red-500 bg-white"
-                                placeholder="Describe current symptoms and issues..."
-                              />
-                            </div>
-                          </div>
-                        );
-                      })}
-
-                      {/* Validation message */}
-                      {errors.currentProblems && (
-                        <p className="text-xs text-red-600 flex items-center">
-                          <ExclamationCircleIcon className="w-3 h-3 mr-1" />
-                          {errors.currentProblems}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+        return (
+          <div
+            key={idx}
+            className="relative border border-red-200 bg-red-50 rounded-lg p-4"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700">
+                Issues
+              </span>
+              <div className="flex items-center gap-1">
+                {formData.currentProblemsEntries.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveProblemSection(idx)}
+                    className="inline-flex items-center text-red-600 hover:text-red-700 px-2 py-1 rounded"
+                    title="Remove this set"
+                  >
+                    <TrashIcon className="w-5 h-5" />
+                  </button>
                 )}
+              </div>
+            </div>
+              {/* Display title from Step 2 */}
+              {bmiCategory && (
+              <div className="mb-2 text-xs font-medium text-gray-600">
+                {formData.step2Titles?.bmi || "BMI"}
+              </div>
+            )}
+
+            {/*  Only show relevant BMI-based checkbox */}
+            {bmiCategory ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                <label
+                  key={bmiCategory}
+                  className="flex items-center bg-white rounded-md border border-red-200 px-3 py-2 shadow-sm"
+                >
+                  <input
+                    type="checkbox"
+                    checked={true} // Always ticked
+                    readOnly // Prevent manual unticking
+                    className="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                  />
+                  <span className="ml-2 text-xs text-gray-800">
+                    {bmiCategory}
+                  </span>
+                </label>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-500 italic">
+                Enter height and weight to calculate BMI and view relevant issue.
+              </p>
+            )}
+
+                {/* Waist Section */}
+                {waistCategory && (
+              <div className="mb-2 text-xs font-medium text-gray-600">
+                {formData.step2Titles?.waist || "Waist"}
+              </div>
+            )}
+            {waistCategory && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                <label className="flex items-center bg-white rounded-md border border-red-200 px-3 py-2 shadow-sm">
+                  <input
+                    type="checkbox"
+                    checked={true}
+                    readOnly
+                    className="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                  />
+                  <span className="ml-2 text-xs text-gray-800">{waistCategory}</span>
+                </label>
+              </div>
+            )}
+
+            <div className="mt-3">
+              <label className="block text-xs font-medium text-gray-700">
+                Additional details
+              </label>
+              <textarea
+                rows={3}
+                value={entry.details}
+                onChange={(e) =>
+                  handleEntryDetailsChange(idx, e.target.value)
+                }
+                className="mt-1 block w-full border rounded-md shadow-sm p-1 text-sm border-gray-300 focus:ring-2 focus:ring-red-500 bg-white"
+                placeholder="Describe current symptoms and issues..."
+              />
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Validation message */}
+      {errors.currentProblems && (
+        <p className="text-xs text-red-600 flex items-center">
+          <ExclamationCircleIcon className="w-3 h-3 mr-1" />
+          {errors.currentProblems}
+        </p>
+      )}
+    </div>
+  </div>
+)}
 
                 {/* Step 6: Screening Tests*/}
                 {currentStep === 6 && (
@@ -2007,7 +2075,7 @@ function AddNewPatient() {
     <button
   type="button"
   onClick={clearForm}
-  className="px-6 py-2 bg-red-400 text-white rounded-md font-medium hover:bg-red-500 transition-colors duration-200 flex items-center shadow-lg"
+ className="px-6 py-2 bg-red-500 text-white rounded-md font-medium hover:bg-red-600 transition-colors duration-200 flex items-center shadow-lg"
 >
   <svg
     className="w-4 h-4 mr-2"

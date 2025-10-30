@@ -62,33 +62,36 @@ const PromoBanner = () => {
   });
 
   return (
-    <div className="relative overflow-hidden rounded-xl p-6 md:p-7 lg:p-8 bg-gradient-to-r from-red-500 to-red-600 text-white shadow-sm">
-      <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
-      <div className="absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-white/10 blur-3xl" />
-      <div className="relative z-10 flex items-center">
-        <div className="flex-1">
-          <div className="text-2xl md:text-3xl font-bold leading-tight">
-            Welcome back!
-          </div>
-          <div className="mt-2 text-sm text-white/90">
-            We hope you have a great day. The latest data is here for you.
-          </div>
-          <div className="mt-2 flex items-center text-sm text-red-50">
-            <CalendarDaysIcon className="w-4 h-4 mr-1 opacity-90" />
-            {formattedDate} · {formattedTime}
-          </div>
+<div className="w-full">
+  <div className="relative overflow-hidden rounded-none md:rounded-xl p-6 md:p-7 lg:p-8 bg-gradient-to-r from-red-500 to-red-600 text-white shadow-sm w-full">
+    <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
+    <div className="absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-white/10 blur-3xl" />
+    <div className="relative z-10 flex items-center justify-between">
+      <div className="flex-1">
+        <div className="text-2xl md:text-3xl font-bold leading-tight">
+          Welcome back!
         </div>
-        <div className="hidden md:block ml-6">
-          <div className="w-40 h-40 md:w-48 md:h-48 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center overflow-hidden">
-            <img
-              src="/doctor.jpg"
-              alt="Doctor"
-              className="w-full h-full object-cover"
-            />
-          </div>
+        <div className="mt-2 text-sm text-white/90">
+          We hope you have a great day. The latest data is here for you.
+        </div>
+        <div className="mt-2 flex items-center text-sm text-red-50">
+          <CalendarDaysIcon className="w-4 h-4 mr-1 opacity-90" />
+          {formattedDate} · {formattedTime}
+        </div>
+      </div>
+      <div className="hidden md:block ml-6">
+        <div className="w-40 h-40 md:w-48 md:h-48 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center overflow-hidden">
+          <img
+            src="/doctor.jpg"
+            alt="Doctor"
+            className="w-full h-full object-cover"
+          />
         </div>
       </div>
     </div>
+  </div>
+</div>
+
   );
 };
 
@@ -444,7 +447,7 @@ function Dashboard() {
         <div className="flex-1 overflow-y-auto p-4 lg:p-6">
           {/* Page title and "Add Patient" button */}
           <div className="mb-4 flex items-center justify-between">
-            <h1 className="text-2xl font-semibold text-gray-800">Dashboard</h1>
+            <h1 className="text-2xl font-semibold text-gray-800"></h1>
             {/* The Link component handles navigation without a full page reload */}
             <div className="flex items-center gap-4">
               <button

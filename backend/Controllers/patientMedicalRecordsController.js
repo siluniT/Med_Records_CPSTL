@@ -1,5 +1,5 @@
 const recordModel = require("../models/patientMedicalRecordsModel");
-const patientModel = require("../Models/patientModel");
+const patientModel = require("../models/patientModel");
 
 // Add medical record
 const addMedicalRecord = (req, res) => {
